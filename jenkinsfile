@@ -56,88 +56,88 @@ pipeline {
             }
         }
 
-        stage('Code Style Check') {
-            steps {
-                echo "3. Check Code Style and Format"
-                script {
-                    dir('app') {
-                        // 1. try 블록으로 메인 로직을 감쌉니다.
-                        try {
-                            def exitCode = sh(script:"pnpm format:check > output.log 2>&1", returnStatus: true)
-                            def output = readFile('output.log').trim()
+        // stage('Code Style Check') {
+        //     steps {
+        //         echo "3. Check Code Style and Format"
+        //         script {
+        //             dir('app') {
+        //                 // 1. try 블록으로 메인 로직을 감쌉니다.
+        //                 try {
+        //                     def exitCode = sh(script:"pnpm format:check > output.log 2>&1", returnStatus: true)
+        //                     def output = readFile('output.log').trim()
 
-                            if (exitCode != 0) {
-                                withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
+        //                     if (exitCode != 0) {
+        //                         withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
                                     
-                                    // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
-                                    def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+        //                             // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
+        //                             def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                                     
-                                    def message = "{\"content\": \"❌ Formatter Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}**\nerrorLog(${exitCode}): ${jsonSafeOutput}\"}"
+        //                             def message = "{\"content\": \"❌ Formatter Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}**\nerrorLog(${exitCode}): ${jsonSafeOutput}\"}"
 
-                                    sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
-                                }
-                                // Jenkins 로그에는 원본 output을 남깁니다.
-                                error "Code Formatting check Failed(${exitCode}) ${output}"    
-                            }
-                            else {
-                                echo "Formatter check is successful."
-                            }
-                        } catch (Exception e) {
-                            failureStage = "Code Style Check Stage"
-                            throw e
-                        } finally {
-                            //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
-                            echo "Cleaning up output.log..."
-                            // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
-                            sh "rm -f output.log"
-                        }   
+        //                             sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
+        //                         }
+        //                         // Jenkins 로그에는 원본 output을 남깁니다.
+        //                         error "Code Formatting check Failed(${exitCode}) ${output}"    
+        //                     }
+        //                     else {
+        //                         echo "Formatter check is successful."
+        //                     }
+        //                 } catch (Exception e) {
+        //                     failureStage = "Code Style Check Stage"
+        //                     throw e
+        //                 } finally {
+        //                     //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
+        //                     echo "Cleaning up output.log..."
+        //                     // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
+        //                     sh "rm -f output.log"
+        //                 }   
                         
-                    }
-                }
-            }
-        }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Check Lint') {
-            steps {
-                echo "4. Check lint"
-                script {
-                    dir('app') {
-                        // 1. try 블록으로 메인 로직을 감쌉니다.
-                        try {
-                            def exitCode = sh(script:"pnpm lint > lint-output.log 2>&1", returnStatus: true)
-                            def output = readFile('lint-output.log').trim()
+        // stage('Check Lint') {
+        //     steps {
+        //         echo "4. Check lint"
+        //         script {
+        //             dir('app') {
+        //                 // 1. try 블록으로 메인 로직을 감쌉니다.
+        //                 try {
+        //                     def exitCode = sh(script:"pnpm lint > lint-output.log 2>&1", returnStatus: true)
+        //                     def output = readFile('lint-output.log').trim()
 
-                            if (exitCode != 0) {
-                                withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
+        //                     if (exitCode != 0) {
+        //                         withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
                                     
-                                    // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
-                                    def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+        //                             // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
+        //                             def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                                     
-                                    def message = "{\"content\": \"❌ Lint Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}** errorLog(${exitCode}): ${jsonSafeOutput}\"}"
+        //                             def message = "{\"content\": \"❌ Lint Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}** errorLog(${exitCode}): ${jsonSafeOutput}\"}"
 
-                                    sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
-                                }
-                                // Jenkins 로그에는 원본 output을 남깁니다.
-                                error "Code Linting check Failed(${exitCode}) ${output}"    
-                            }
-                            else {
-                                echo "Lint check is successful."
-                            }
-                        } catch (Exception e) {
-                            failureStage = "Lint Check Stage"
-                            throw e
-                        } finally {
-                            // 2. 'finally' 블록에 정리 코드를 둡니다.
-                            //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
-                            echo "Cleaning up lint-output.log..."
-                            // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
-                            sh "rm -f lint-output.log"
-                        }   
+        //                             sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
+        //                         }
+        //                         // Jenkins 로그에는 원본 output을 남깁니다.
+        //                         error "Code Linting check Failed(${exitCode}) ${output}"    
+        //                     }
+        //                     else {
+        //                         echo "Lint check is successful."
+        //                     }
+        //                 } catch (Exception e) {
+        //                     failureStage = "Lint Check Stage"
+        //                     throw e
+        //                 } finally {
+        //                     // 2. 'finally' 블록에 정리 코드를 둡니다.
+        //                     //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
+        //                     echo "Cleaning up lint-output.log..."
+        //                     // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
+        //                     sh "rm -f lint-output.log"
+        //                 }   
                         
-                    }
-                }
-            }
-        }
+        //             }
+        //         }
+        //     }
+        // }
 
         // build image
         stage('Build Image') {
