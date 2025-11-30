@@ -31,7 +31,7 @@ pipeline {
                 script {
                     try {
                         echo "1. Get the latest code from GitHub"
-                        git credentialsId: GITHUB_CREDS_ID, url: 'https://github.com/paul2021-r/project-mini-frontend.git', branch: 'main'
+                        git credentialsId: GITHUB_CREDS_ID, url: 'https://github.com/paul2021-r/project-protostar-nest.git', branch: 'main'
                     } catch (Exception e) {
                         failureStage = "Checkout Stage"
                         throw e
@@ -181,12 +181,12 @@ pipeline {
                 script {
                     try {
                         // 어떤 컨테이너를 업데이트 및 업스트림 대상을 지정
-                        def deployService = (env.BUILD_NUMBER.toInteger() % 2 == 0) ? "nextjs-green" : "nextjs-blue" 
-                        def upstreamService = (deployService == "nextjs-green") ? "nextjs-blue" : "nextjs-green"
+                        def deployService = (env.BUILD_NUMBER.toInteger() % 2 == 0) ? "nestjs-green" : "nestjs-blue" 
+                        def upstreamService = (deployService == "nestjs-green") ? "nestjs-blue" : "nestjs-green"
 
                         def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
                         def newTag = "${env.BUILD_NUMBER}"
-                        def tagEnvVar = (deployService == "nextjs-green") ? "TAG_GREEN" : "TAG_BLUE"
+                        def tagEnvVar = (deployService == "nestjs-green") ? "TAG_GREEN" : "TAG_BLUE"
                         withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN')]) {
                             sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
                                 sh """ 
@@ -213,10 +213,10 @@ pipeline {
 
                                     echo "--- (3/4) Switch Nginx Configuration to change traffic ---"
                                     cd ${TARGET_INFRA_PATH}
-                                    sed -i "s|server main-nextjs-.*:3000;|server main-${deployService}:3000;|" ./nginx/nginx_upstream_nextjs.conf   
+                                    sed -i "s|server main-nestjs-.*:3000;|server main-${deployService}:3000;|" ./nginx/nginx_upstream_nestjs.conf   
 
                                     echo "--- (4/4) Reload Nginx Configuration ---"
-                                    docker exec main-nginx nginx -s reload
+                                    docker exec main-protostar-nginx nginx -s reload
 
                                     echo "--- Logging out from GHCR on target server ---"
                                     docker logout ghcr.io
