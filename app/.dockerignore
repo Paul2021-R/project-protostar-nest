@@ -1,0 +1,19 @@
+# .dockerignore
+
+# Git 폴더
+.git
+
+# 의존성 폴더 (컨테이너 내부에서 새로 설치할 것이므로 제외)
+node_modules
+
+# Next.js 빌드 캐시 및 결과물(컨테이너 내부에서 새로 빌드할 것이므로 제외)
+.next 
+
+# 로컬 환경 변수 파일 
+.env.local 
+
+# pnpm 디버그 로그 
+pnpm-debug.log
+
+# README 파일
+README.md

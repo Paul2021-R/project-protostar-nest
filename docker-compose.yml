@@ -1,0 +1,23 @@
+services:
+  nestjs-blue:
+    container_name: main-nestjs-blue
+    image: ${NESTJS_BLUE_IMAGE}:${TAG_BLUE}
+    networks:
+      - main-protostar
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  nestjs-green:
+    container_name: main-nestjs-green
+    image: ${NESTJS_GREEN_IMAGE}:${TAG_GREEN}
+    networks:
+      - main-protostar
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+networks:
+  main-protostar:
+    external: true
+    name: main-protostar

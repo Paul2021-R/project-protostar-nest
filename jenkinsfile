@@ -1,0 +1,268 @@
+def failureStage = "Unknown" // 기본값
+
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'NodeJS-22'
+    }
+    
+    environment {
+        GHCR_CREDS_ID = 'ghcr-creds'
+        GITHUB_CREDS_ID = 'github-creds'
+        TARGET_SSH_CREDS_ID = 'a5-localhost-jenkins'
+
+        TARGET_DEPLOY_SERVER = 'GEEKOM-A5-Server'
+
+        DISCORD_CREDS_ID = 'discord-webhook-url'
+
+        IMAGE_NAME = 'ghcr.io/paul2021-r/project-protostar-nest'
+
+        TARGET_HOST = credentials('ssh-host-creds')
+        TARGET_PORT = credentials('ssh-port-creds')
+        TARGET_PROJECT_PATH = '/home/hansol/workspace/project-protostar-nest'
+        TARGET_INFRA_PATH = '/home/hansol/workspace/project-protostar-server-configs/main-server'
+    }
+
+    stages {
+    // code pull
+        stage('Checkout') {
+            steps {
+                script {
+                    try {
+                        echo "1. Get the latest code from GitHub"
+                        git credentialsId: GITHUB_CREDS_ID, url: 'https://github.com/paul2021-r/project-mini-frontend.git', branch: 'main'
+                    } catch (Exception e) {
+                        failureStage = "Checkout Stage"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo "2. Install Dependencies"
+                script {
+                    try {
+                        dir('app') {
+                            sh "pnpm install"
+                        }
+                    } catch (Exception e) {
+                        failureStage = "Install Dependencies Stage"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Code Style Check') {
+            steps {
+                echo "3. Check Code Style and Format"
+                script {
+                    dir('app') {
+                        // 1. try 블록으로 메인 로직을 감쌉니다.
+                        try {
+                            def exitCode = sh(script:"pnpm format:check > output.log 2>&1", returnStatus: true)
+                            def output = readFile('output.log').trim()
+
+                            if (exitCode != 0) {
+                                withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
+                                    
+                                    // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
+                                    def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                    
+                                    def message = "{\"content\": \"❌ Formatter Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}**\nerrorLog(${exitCode}): ${jsonSafeOutput}\"}"
+
+                                    sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
+                                }
+                                // Jenkins 로그에는 원본 output을 남깁니다.
+                                error "Code Formatting check Failed(${exitCode}) ${output}"    
+                            }
+                            else {
+                                echo "Formatter check is successful."
+                            }
+                        } catch (Exception e) {
+                            failureStage = "Code Style Check Stage"
+                            throw e
+                        } finally {
+                            //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
+                            echo "Cleaning up output.log..."
+                            // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
+                            sh "rm -f output.log"
+                        }   
+                        
+                    }
+                }
+            }
+        }
+
+        stage('Check Lint') {
+            steps {
+                echo "4. Check lint"
+                script {
+                    dir('app') {
+                        // 1. try 블록으로 메인 로직을 감쌉니다.
+                        try {
+                            def exitCode = sh(script:"pnpm lint > lint-output.log 2>&1", returnStatus: true)
+                            def output = readFile('lint-output.log').trim()
+
+                            if (exitCode != 0) {
+                                withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
+                                    
+                                    // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
+                                    def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                    
+                                    def message = "{\"content\": \"❌ Lint Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}** errorLog(${exitCode}): ${jsonSafeOutput}\"}"
+
+                                    sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
+                                }
+                                // Jenkins 로그에는 원본 output을 남깁니다.
+                                error "Code Linting check Failed(${exitCode}) ${output}"    
+                            }
+                            else {
+                                echo "Lint check is successful."
+                            }
+                        } catch (Exception e) {
+                            failureStage = "Lint Check Stage"
+                            throw e
+                        } finally {
+                            // 2. 'finally' 블록에 정리 코드를 둡니다.
+                            //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
+                            echo "Cleaning up lint-output.log..."
+                            // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
+                            sh "rm -f lint-output.log"
+                        }   
+                        
+                    }
+                }
+            }
+        }
+
+        // build image
+        stage('Build Image') {
+            steps {
+                echo "5. Build New Docker Image"
+                script {
+                    try {
+                        def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}" 
+                        sh "docker build -t ${imageTag} ./app" 
+                    } catch (Exception e) {
+                        failureStage = "Build Stage"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        // push image
+        stage('Push to GHCR') {
+            steps {
+                echo "6. Push the Docker Image to GHCR"
+                script {
+                    try {
+                        def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                        withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'USER', passwordVariable: 'TOKEN')]) {
+                            sh "echo ${TOKEN} | docker login ghcr.io -u ${USER} --password-stdin"
+                            sh "docker push ${imageTag}"
+                        }
+                    } catch (Exception e) {
+                        failureStage = "Push to GHCR Stage"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        // deploy to server
+        stage('Deploy to Server') {
+            steps {
+                echo "7. Deploy the new image to the ${TARGET_DEPLOY_SERVER} server"
+                script {
+                    try {
+                        // 어떤 컨테이너를 업데이트 및 업스트림 대상을 지정
+                        def deployService = (env.BUILD_NUMBER.toInteger() % 2 == 0) ? "nextjs-green" : "nextjs-blue" 
+                        def upstreamService = (deployService == "nextjs-green") ? "nextjs-blue" : "nextjs-green"
+
+                        def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                        def newTag = "${env.BUILD_NUMBER}"
+                        def tagEnvVar = (deployService == "nextjs-green") ? "TAG_GREEN" : "TAG_BLUE"
+                        withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN')]) {
+                            sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
+                                sh """ 
+                                    ssh -o StrictHostKeyChecking=no -p ${TARGET_PORT} ${TARGET_HOST} '
+                                    set -ex
+
+                                    echo "--- Logging in to GHCR on target server ---"
+                                    echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${GHCR_USER} --password-stdin
+
+                                    echo "--- (1/4) Pull the new image : ${imageTag} ---"
+                                    docker pull ${imageTag}
+
+                                    echo "--- (2/4) Replace ${deployService} Server to new  ---"
+                                    cd ${TARGET_PROJECT_PATH}
+                                    
+                                    echo "--- Refresh main repository ---"
+                                    git pull origin main
+                                    git checkout main
+
+                                    echo "--- Exporting new tag for compose: ${tagEnvVar}=${newTag} ---"
+                                    export ${tagEnvVar}="${newTag}"
+                                    
+                                    docker compose --env-file init.env up -d --no-deps --force-recreate ${deployService}
+
+                                    echo "--- (3/4) Switch Nginx Configuration to change traffic ---"
+                                    cd ${TARGET_INFRA_PATH}
+                                    sed -i "s|server main-nextjs-.*:3000;|server main-${deployService}:3000;|" ./nginx/nginx_upstream_nextjs.conf   
+
+                                    echo "--- (4/4) Reload Nginx Configuration ---"
+                                    docker exec main-nginx nginx -s reload
+
+                                    echo "--- Logging out from GHCR on target server ---"
+                                    docker logout ghcr.io
+                                    
+                                    echo "--- All Deploy Proccess is done ---"
+                                    '
+                                """
+                            }
+                        }
+                    } catch (Exception e) {
+                        failureStage = "Deploy Stage"
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+   
+    post {
+        success {
+            echo "Deployment succeeded. Now send a discord notification."
+            script {
+                withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
+                    def message = "{\"content\": \"🚀 Build Process is successfully finished : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}**\"}"
+
+                    sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
+                }
+
+            }
+
+        }
+        failure {
+            echo "Deployment failed! Now send a discord notification."
+
+            script {
+                withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
+                    def message = "{\"content\": \"🔥 Build Process is failed at ${failureStage}. Check Build logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}**\"}"
+
+                    sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
+                }    
+            }
+            
+        }
+        always {
+            echo "Logout from GHCR"
+            sh "docker logout ghcr.io"
+        }
+    }
+}
