@@ -24,7 +24,7 @@ FROM dev_runner AS builder
 COPY . .
 
 # Schema 
-RUN pnpm prisma generate 
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm prisma generate
 
 # 애플리케이션 빌드
 RUN pnpm run build
