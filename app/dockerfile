@@ -23,7 +23,7 @@ FROM dev_runner AS builder
 # 나머지 소스 코드 전체 복사 
 COPY . .
 
-# Schema 
+# Schema 빌드 시점이라 가짜 URL 사용 괜찮음
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm prisma generate
 
 # 애플리케이션 빌드
@@ -52,7 +52,7 @@ COPY --from=prod_modules_setter /app/node_modules ./node_modules
 COPY --from=prod_modules_setter /app/package.json ./package.json
 
 # 4. Prisma Client 엔진 및 코드 복사 
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/generated ./generated
 
 # 애플리케이션이 사용할 포트 노출 
 EXPOSE 3000
