@@ -6,6 +6,7 @@ services:
       - main-protostar
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}  # 호스트 환경 변수 주입
     restart: unless-stopped
 
   nestjs-green:
@@ -15,6 +16,7 @@ services:
       - main-protostar
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}  # 호스트 환경 변수 주입
     restart: unless-stopped
 
 networks:

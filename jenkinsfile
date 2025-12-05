@@ -187,7 +187,7 @@ pipeline {
                         def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
                         def newTag = "${env.BUILD_NUMBER}"
                         def tagEnvVar = (deployService == "nestjs-green") ? "TAG_GREEN" : "TAG_BLUE"
-                        withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN')]) {
+                        withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'), string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL')]) {
                             sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
                                 sh """ 
                                     ssh -o StrictHostKeyChecking=no -p ${TARGET_PORT} ${TARGET_HOST} '
@@ -208,6 +208,9 @@ pipeline {
 
                                     echo "--- Exporting new tag for compose: ${tagEnvVar}=${newTag} ---"
                                     export ${tagEnvVar}="${newTag}"
+
+                                    echo "--- Exporting URL ---"
+                                    export DATABASE_URL="${PROD_DB_URL}"
                                     
                                     docker compose --env-file init.env up -d --no-deps --force-recreate ${deployService}
 
