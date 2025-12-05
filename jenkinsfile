@@ -146,7 +146,12 @@ pipeline {
                 script {
                     try {
                         def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}" 
-                        sh "docker build -t ${imageTag} ./app" 
+                        withCredentials([string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL')]) {
+                            sh """
+                                export DATABASE_URL=${PROD_DB_URL}
+                                docker build -t ${imageTag} ./app
+                            """
+                        } 
                     } catch (Exception e) {
                         failureStage = "Build Stage"
                         throw e
