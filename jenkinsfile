@@ -191,7 +191,9 @@ pipeline {
 
                         def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
                         def newTag = "${env.BUILD_NUMBER}"
+                        def earlyTag = "${env.BUILD_NUMBER.toInteger() - 1}"
                         def tagEnvVar = (deployService == "nestjs-green") ? "TAG_GREEN" : "TAG_BLUE"
+                        def tagOppositeEnvVar = (deployService == "nestjs-green") ? "TAG_BLUE" : "TAG_GREEN"
                         withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'), string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL')]) {
                             sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
                                 sh """ 
@@ -213,6 +215,7 @@ pipeline {
 
                                     echo "--- Exporting new tag for compose: ${tagEnvVar}=${newTag} ---"
                                     export ${tagEnvVar}="${newTag}"
+                                    export ${tagOppositeEnvVar}="${earlyTag}"
 
                                     echo "--- Exporting URL ---"
                                     export DATABASE_URL="${PROD_DB_URL}"
