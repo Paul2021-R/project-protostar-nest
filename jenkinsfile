@@ -73,7 +73,9 @@ pipeline {
                         def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}" 
                         withCredentials([string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL')]) {
                             sh """
+                                set +x
                                 export DATABASE_URL=${PROD_DB_URL}
+                                set -x
                                 docker build -t ${imageTag} ./app
                             """
                         } 
@@ -137,7 +139,7 @@ pipeline {
                                 def commands = []
 
                                 // Common Setup
-                                commands << "set -ex"
+                                commands << "set -e"
                                 
                                 // Action: Build & Deploy (or Full)
                                 if (params.DEPLOY_ACTION != 'Switch Traffic Only') {
@@ -155,7 +157,9 @@ pipeline {
                                     commands << "git checkout main"
                                     
                                     commands << "echo '--- Exporting URL ---'"
+                                    commands << "set +x"
                                     commands << "export DATABASE_URL='${PROD_DB_URL}'"
+                                    commands << "set +x"
 
                                     // Loop through services
                                     deployServices.each { service ->
