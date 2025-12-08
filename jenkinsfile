@@ -24,6 +24,11 @@ pipeline {
         TARGET_INFRA_PATH = '/home/hansol/workspace/project-protostar-server-configs/main-server'
     }
 
+    parameters {
+        choice(name: 'TARGET_COLOR', choices: ['Auto', 'Blue', 'Green', 'Both'], description: 'Select the color to deploy. Auto follows BUILD_NUMBER odd/even logic.')
+        choice(name: 'DEPLOY_ACTION', choices: ['Full Deploy', 'Build & Deploy Only', 'Switch Traffic Only'], description: 'Select the scope of the deployment.')
+    }
+
     stages {
     // code pull
         stage('Checkout') {
@@ -56,91 +61,11 @@ pipeline {
             }
         }
 
-        // stage('Code Style Check') {
-        //     steps {
-        //         echo "3. Check Code Style and Format"
-        //         script {
-        //             dir('app') {
-        //                 // 1. try 블록으로 메인 로직을 감쌉니다.
-        //                 try {
-        //                     def exitCode = sh(script:"pnpm format:check > output.log 2>&1", returnStatus: true)
-        //                     def output = readFile('output.log').trim()
-
-        //                     if (exitCode != 0) {
-        //                         withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
-                                    
-        //                             // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
-        //                             def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                                    
-        //                             def message = "{\"content\": \"❌ Formatter Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}**\nerrorLog(${exitCode}): ${jsonSafeOutput}\"}"
-
-        //                             sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
-        //                         }
-        //                         // Jenkins 로그에는 원본 output을 남깁니다.
-        //                         error "Code Formatting check Failed(${exitCode}) ${output}"    
-        //                     }
-        //                     else {
-        //                         echo "Formatter check is successful."
-        //                     }
-        //                 } catch (Exception e) {
-        //                     failureStage = "Code Style Check Stage"
-        //                     throw e
-        //                 } finally {
-        //                     //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
-        //                     echo "Cleaning up output.log..."
-        //                     // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
-        //                     sh "rm -f output.log"
-        //                 }   
-                        
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('Check Lint') {
-        //     steps {
-        //         echo "4. Check lint"
-        //         script {
-        //             dir('app') {
-        //                 // 1. try 블록으로 메인 로직을 감쌉니다.
-        //                 try {
-        //                     def exitCode = sh(script:"pnpm lint > lint-output.log 2>&1", returnStatus: true)
-        //                     def output = readFile('lint-output.log').trim()
-
-        //                     if (exitCode != 0) {
-        //                         withCredentials([string(credentialsId: DISCORD_CREDS_ID, variable: 'DISCORD_URL')]) {
-                                    
-        //                             // (추가 개선) output에 "나 \가 포함되면 JSON이 깨질 수 있으므로 이스케이프합니다.
-        //                             def jsonSafeOutput = output.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                                    
-        //                             def message = "{\"content\": \"❌ Lint Check is failed. Check logs ${env.BUILD_URL} : **[${env.JOB_NAME}]** - **#${env.BUILD_NUMBER}** errorLog(${exitCode}): ${jsonSafeOutput}\"}"
-
-        //                             sh "curl -X POST -H 'Content-Type: application/json' --data '${message}' ${DISCORD_URL}"
-        //                         }
-        //                         // Jenkins 로그에는 원본 output을 남깁니다.
-        //                         error "Code Linting check Failed(${exitCode}) ${output}"    
-        //                     }
-        //                     else {
-        //                         echo "Lint check is successful."
-        //                     }
-        //                 } catch (Exception e) {
-        //                     failureStage = "Lint Check Stage"
-        //                     throw e
-        //                 } finally {
-        //                     // 2. 'finally' 블록에 정리 코드를 둡니다.
-        //                     //    이 블록은 위에서 error가 발생해도, 성공해도 "항상" 실행됩니다.
-        //                     echo "Cleaning up lint-output.log..."
-        //                     // (추가 개선) -f 옵션으로 파일이 없어도 에러를 내지 않도록 합니다.
-        //                     sh "rm -f lint-output.log"
-        //                 }   
-                        
-        //             }
-        //         }
-        //     }
-        // }
-
         // build image
         stage('Build Image') {
+            when {
+                expression { params.DEPLOY_ACTION != 'Switch Traffic Only' }
+            }
             steps {
                 echo "5. Build New Docker Image"
                 script {
@@ -162,6 +87,9 @@ pipeline {
 
         // push image
         stage('Push to GHCR') {
+            when {
+                expression { params.DEPLOY_ACTION != 'Switch Traffic Only' }
+            }
             steps {
                 echo "6. Push the Docker Image to GHCR"
                 script {
@@ -185,56 +113,93 @@ pipeline {
                 echo "7. Deploy the new image to the ${TARGET_DEPLOY_SERVER} server"
                 script {
                     try {
-                        // 어떤 컨테이너를 업데이트 및 업스트림 대상을 지정
-                        def deployService = (env.BUILD_NUMBER.toInteger() % 2 == 0) ? "nestjs-green" : "nestjs-blue" 
-                        def upstreamService = (deployService == "nestjs-green") ? "nestjs-blue" : "nestjs-green"
+                        // 1. Determine Target Services
+                        def deployServices = []
+                        if (params.TARGET_COLOR == 'Both') {
+                             deployServices = ['nestjs-blue', 'nestjs-green']
+                        } else if (params.TARGET_COLOR == "Auto") {
+                             deployServices = [(env.BUILD_NUMBER.toInteger() % 2 == 0) ? "nestjs-green" : "nestjs-blue"]
+                        } else if (params.TARGET_COLOR == "Blue") {
+                             deployServices = ["nestjs-blue"]
+                        } else {
+                             deployServices = ["nestjs-green"]
+                        }
+
+                        echo "Target Services via ${params.TARGET_COLOR}: ${deployServices}"
 
                         def imageTag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
                         def newTag = "${env.BUILD_NUMBER}"
                         def earlyTag = "${env.BUILD_NUMBER.toInteger() - 1}"
-                        def tagEnvVar = (deployService == "nestjs-green") ? "TAG_GREEN" : "TAG_BLUE"
-                        def tagOppositeEnvVar = (deployService == "nestjs-green") ? "TAG_BLUE" : "TAG_GREEN"
+                        
                         withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'), string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL')]) {
                             sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
-                                sh """ 
-                                    ssh -o StrictHostKeyChecking=no -p ${TARGET_PORT} ${TARGET_HOST} '
-                                    set -ex
+                                // 2. Deployment Script Construction
+                                def commands = []
 
-                                    echo "--- Logging in to GHCR on target server ---"
-                                    echo "${GHCR_TOKEN}" | docker login ghcr.io -u ${GHCR_USER} --password-stdin
+                                // Common Setup
+                                commands << "set -ex"
+                                
+                                // Action: Build & Deploy (or Full)
+                                if (params.DEPLOY_ACTION != 'Switch Traffic Only') {
+                                    commands << "echo '--- Logging in to GHCR on target server ---'"
+                                    commands << "echo '${GHCR_TOKEN}' | docker login ghcr.io -u ${GHCR_USER} --password-stdin"
 
-                                    echo "--- (1/4) Pull the new image : ${imageTag} ---"
-                                    docker pull ${imageTag}
+                                    commands << "echo '--- (1/4) Pull the new image : ${imageTag} ---'"
+                                    commands << "docker pull ${imageTag}"
 
-                                    echo "--- (2/4) Replace ${deployService} Server to new  ---"
-                                    cd ${TARGET_PROJECT_PATH}
+                                    commands << "echo '--- (2/4) Replace Server(s) to new  ---'"
+                                    commands << "cd ${TARGET_PROJECT_PATH}"
                                     
-                                    echo "--- Refresh main repository ---"
-                                    git pull origin main
-                                    git checkout main
-
-                                    echo "--- Exporting new tag for compose: ${tagEnvVar}=${newTag} ---"
-                                    export ${tagEnvVar}="${newTag}"
-                                    export ${tagOppositeEnvVar}="${earlyTag}"
-
-                                    echo "--- Exporting URL ---"
-                                    export DATABASE_URL="${PROD_DB_URL}"
+                                    commands << "echo '--- Refresh main repository ---'"
+                                    commands << "git pull origin main" 
+                                    commands << "git checkout main"
                                     
-                                    docker compose --env-file init.env up -d --no-deps --force-recreate ${deployService}
+                                    commands << "echo '--- Exporting URL ---'"
+                                    commands << "export DATABASE_URL='${PROD_DB_URL}'"
 
-                                    echo "--- (3/4) Switch Nginx Configuration to change traffic ---"
-                                    cd ${TARGET_INFRA_PATH}
-                                    sed -i "s|server main-nestjs-.*:3000;|server main-${deployService}:3000;|" ./nginx/nginx_upstream_nestjs.conf   
-
-                                    echo "--- (4/4) Reload Nginx Configuration ---"
-                                    docker exec main-protostar-nginx nginx -s reload
-
-                                    echo "--- Logging out from GHCR on target server ---"
-                                    docker logout ghcr.io
+                                    // Loop through services
+                                    deployServices.each { service ->
+                                        def tagEnvVar = (service == "nestjs-green") ? "TAG_GREEN" : "TAG_BLUE"
+                                        commands << "echo '--- Exporting new tag for ${service}: ${tagEnvVar}=${newTag} ---'"
+                                        commands << "export ${tagEnvVar}='${newTag}'"
+                                    }
                                     
-                                    echo "--- All Deploy Proccess is done ---"
-                                    '
-                                """
+                                    // If 'Single' case, we formerly exported the opposite tag too.
+                                    if (params.TARGET_COLOR != 'Both') {
+                                        def activeService = deployServices[0]
+                                        def tagOppositeEnvVar = (activeService == "nestjs-green") ? "TAG_BLUE" : "TAG_GREEN"
+                                        commands << "export ${tagOppositeEnvVar}='${earlyTag}'"
+                                    }
+
+                                    deployServices.each { service ->
+                                        commands << "docker compose --env-file init.env up -d --no-deps --force-recreate ${service}"
+                                    }
+                                    
+                                    commands << "echo '--- Logging out from GHCR on target server ---'"
+                                    commands << "docker logout ghcr.io"
+                                }
+
+                                // Action: Switch Traffic (or Full)
+                                if (params.DEPLOY_ACTION != 'Build & Deploy Only') {
+                                    commands << "echo '--- (3/4) Switch Nginx Configuration to change traffic ---'"
+                                    
+                                    // Only switch upstream if we are targeting a specific single color
+                                    if (params.TARGET_COLOR != 'Both') {
+                                        def targetService = deployServices[0]
+                                        commands << "cd ${TARGET_INFRA_PATH}"
+                                        commands << "sed -i 's|server main-nestjs-.*:3000;|server main-${targetService}:3000;|' ./nginx/nginx_upstream_nestjs.conf"   
+                                    } else {
+                                        commands << "echo 'Skipping Nginx Upstream Switch because TARGET_COLOR is Both (Preserving current active upstream)'"
+                                    }
+
+                                    commands << "echo '--- (4/4) Reload Nginx Configuration ---'"
+                                    commands << "docker exec main-protostar-nginx nginx -s reload"
+                                }
+
+                                commands << "echo '--- All Deploy Proccess is done ---'"
+
+                                // Execute
+                                sh "ssh -o StrictHostKeyChecking=no -p ${TARGET_PORT} ${TARGET_HOST} '${commands.join('\n')}'"
                             }
                         }
                     } catch (Exception e) {
