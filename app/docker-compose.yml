@@ -1,16 +1,19 @@
 # Docker Compose 파일 형식 버전
+name: project-protostar-backend
 services:
   dev:
     container_name: protostar-nest-dev
     build:
       context: .
       target: dev_runner
-    command: sh -c "pnpm start:dev"
+    command: sh -c "pnpm start dev"
     ports:
       - '5859:3000'
     volumes:
       - .:/app
       - /app/node_modules
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
   prod:
