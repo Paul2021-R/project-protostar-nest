@@ -201,8 +201,9 @@ pipeline {
                                 }
 
                                 commands << "echo '--- All Deploy Proccess is done ---'"
-
-                                sh "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -p ${TARGET_PORT} ${TARGET_HOST} '${pruneCmd}'"
+                                
+                                def deployScript = commands.join('\n')
+                                sh "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -p ${TARGET_PORT} ${TARGET_HOST} \"${deployScript}\""
                             }
                         }
                     } catch (Exception e) {
