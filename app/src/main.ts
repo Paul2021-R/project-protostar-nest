@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { OriginGuard } from './common/guards/origin.guard';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
-import { WINSTON_MODULE_NEST_PROVIDER, WinstonModule } from 'nest-winston';
+import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 
 async function bootstrap() {
@@ -13,11 +13,11 @@ async function bootstrap() {
           level: 'info',
           format: winston.format.combine(
             winston.format.timestamp(),
-            winston.format.json()
+            winston.format.json(),
           ),
-        })
-      ]
-    })
+        }),
+      ],
+    }),
   });
 
   const staticWhitelist = ['https://paul2021-r.github.io'];
@@ -34,9 +34,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.useGlobalFilters(new GlobalExceptionFilter);
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalGuards(new OriginGuard());
-
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
