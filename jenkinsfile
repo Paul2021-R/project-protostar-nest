@@ -133,7 +133,15 @@ pipeline {
                         def newTag = "${env.BUILD_NUMBER}"
                         def earlyTag = "${Math.max(1, env.BUILD_NUMBER.toInteger() - 1)}"
                         
-                        withCredentials([usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'), string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL')]) {
+                        withCredentials([
+                            usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', 
+                            passwordVariable: 'GHCR_TOKEN'), 
+                            string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL'),
+                            string(credentialsId: 'prod-redis-host', variable: 'PROD_REDIS_HOST'),
+                            string(credentialsId: 'prod-redis-port', variable: 'PROD_REDIS_PORT'),
+                            string(credentialsId: 'prod-redis-password', variable: 'PROD_REDIS_PASSWORD'),
+                            string(credentialsId: 'prod-redis-db', variable: 'PROD_REDIS_DB'),
+                            ]) {
                             sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
                                 // 2. Deployment Script Construction
                                 def commands = []
@@ -159,6 +167,10 @@ pipeline {
                                     commands << "echo '--- Exporting URL ---'"
                                     commands << "set +x"
                                     commands << "export DATABASE_URL='${PROD_DB_URL}'"
+                                    commands << "export REDIS_HOST='${PROD_REDIS_HOST}'"
+                                    commands << "export REDIS_PORT='${PROD_REDIS_PORT}'"
+                                    commands << "export REDIS_PASSWORD='${PROD_REDIS_PASSWORD}'"
+                                    commands << "export REDIS_DB='${PROD_REDIS_DB}'"
                                     commands << "set -x"
 
                                     // Loop through services
