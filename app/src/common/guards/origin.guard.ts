@@ -3,10 +3,9 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@
 @Injectable()
 export class OriginGuard implements CanActivate {
     private readonly staticWhitelist = [
-        'http://localhost:3000',
         'https://paul2021-r.github.io',
-        'https://service-protostar.ddns.net'
     ]
+    //TODO : Redis 기반 가변 Guard 로 개선 예정
 
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest();

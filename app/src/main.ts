@@ -6,9 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const staticWhitelist = [
-    'http://localhost:3000',
     'https://paul2021-r.github.io',
-    'https://service-protostar.ddns.net'
   ]
 
   app.enableCors({
