@@ -16,6 +16,13 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+    deploy:
+      resources:
+        limits:
+          memory: '512M' 
+        reservations:
+          memory: '256M'
+    
   prod:
     container_name: protostar-nest-prod
     build:
@@ -24,3 +31,11 @@ services:
       - '5859:3000'
     environment:
       - NODE_ENV=production
+    # env_file: # local 돌리시 켜줘야 함!!!
+    #   - .env
+    deploy:
+      resources:
+        limits:
+          memory: '512M' 
+        reservations:
+          memory: '256M'

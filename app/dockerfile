@@ -58,4 +58,4 @@ COPY --from=builder /app/generated ./generated
 EXPOSE 3000
 
 # 컨테이너 시작 시 명령어
-CMD ["node", "dist/src/main"]
+CMD ["node", "--max-old-space-size=384", "dist/src/main"]
