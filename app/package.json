@@ -12,6 +12,7 @@
     "start:debug": "nest start --debug --watch",
     "start:dev": "docker compose up dev",
     "start:devB": "docker compose up dev -d",
+    "start:watch": "nest start --watch",
     "start:prod": "docker compose up prod",
     "start:prodB": "docker compose up prod -d",
     "set:dev": "docker compose build dev",

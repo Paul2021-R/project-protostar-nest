@@ -6,7 +6,7 @@ services:
     build:
       context: .
       target: dev_runner
-    command: sh -c "pnpm start dev"
+    command: sh -c "pnpm start:watch"
     ports:
       - '5859:3000'
     volumes:
