@@ -4,6 +4,7 @@ import { OriginGuard } from './common/guards/origin.guard';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -36,6 +37,12 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalGuards(new OriginGuard());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
