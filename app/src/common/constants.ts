@@ -1,0 +1,3 @@
+export const CHAT_MAX_CONNECTIONS = 1000;
+export const SSE_HEARTBEAT_INTERNBAL = 30000;
+export const SSE_RETRY_SECONDS = 10;  

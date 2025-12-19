@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from './common/redis/redis.module';
+import { ChatModule } from './features/chat/chat.module';
 
 @Module({
   imports: [
@@ -12,8 +13,9 @@ import { RedisModule } from './common/redis/redis.module';
       envFilePath: '.env',
     }),
     RedisModule,
+    ChatModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
-export class AppModule {}
+export class AppModule { }
