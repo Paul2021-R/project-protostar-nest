@@ -13,9 +13,9 @@ import { ChatModule } from './features/chat/chat.module';
       envFilePath: '.env',
     }),
     RedisModule,
-    ChatModule
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
-export class AppModule { }
+export class AppModule {}
