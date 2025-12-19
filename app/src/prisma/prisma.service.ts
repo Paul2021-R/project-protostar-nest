@@ -11,9 +11,9 @@ import { Pool } from 'pg';
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly pool: Pool;
 
   constructor() {
     // 생성 기능에 충실하게
@@ -26,6 +26,7 @@ export class PrismaService
 
     const adapter = new PrismaPg(pool);
     super({ adapter });
+    this.pool = pool;
   }
 
   async onModuleInit() {
@@ -50,5 +51,6 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    await this.pool.end();
   }
 }
