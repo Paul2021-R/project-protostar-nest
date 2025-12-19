@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Get,
@@ -16,7 +17,7 @@ import {
 import { from, interval, merge, Observable } from 'rxjs';
 import { map, finalize } from 'rxjs/operators';
 import {
-    SSE_HEARTBEAT_INTERNBAL,
+    SSE_HEARTBEAT_INTERVAL,
     SSE_RETRY_SECONDS,
 } from 'src/common/constants';
 import { ChatService } from './chat.service';
@@ -88,7 +89,7 @@ export class ChatController {
             } as MessageEvent,
         ]);
 
-        const heartbeatEvent = interval(SSE_HEARTBEAT_INTERNBAL).pipe(
+        const heartbeatEvent = interval(SSE_HEARTBEAT_INTERVAL).pipe(
             map(
                 () =>
                     ({
@@ -134,6 +135,8 @@ export class ChatController {
         } catch (e) {
             if (e.message === 'Unauthorized') {
                 throw new UnauthorizedException(e.message);
+            } else if (e.message === 'Bad Request') {
+                throw new BadRequestException(e.message);
             }
             throw new InternalServerErrorException(e.message);
         }

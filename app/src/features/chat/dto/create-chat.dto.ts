@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString, MaxLength, ValidateIf } from "@nestjs/class-validator";
+import { IsEnum, IsNotEmpty, IsString, MaxLength, ValidateIf } from "class-validator";
 
 export class CreateChatDto {
 

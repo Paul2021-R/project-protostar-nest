@@ -66,7 +66,7 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
             // 앞뒤 공백 제거 
             cleanContext = cleanContext.trim();
         } else if (dto.mode === 'page_context' && !dto.context) {
-            throw new Error('Unauthorized');
+            throw new Error('Bad Request');
         }
 
         // 3. 저장 및 큐 적재 (Redis)
