@@ -1,7 +1,7 @@
 # Docker Compose 파일 형식 버전
 name: project-protostar-backend
 services:
-  nestsjs-dev:
+  nestjs-dev:
     container_name: protostar-nest-dev
     build:
       context: .
