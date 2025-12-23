@@ -21,7 +21,13 @@ async function bootstrap() {
     }),
   });
 
-  const staticWhitelist = ['https://paul2021-r.github.io'];
+  const staticWhitelist = [
+    'https://paul2021-r.github.io',
+    'https://service-protostar.ddns.net',
+    'http://localhost:4000',
+    'http://127.0.0.1:4000',
+    'http://172.24.0.1:4000',
+  ];
 
   app.enableCors({
     origin: (requestOrigin, callback) => {

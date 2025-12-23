@@ -7,7 +7,12 @@ import {
 
 @Injectable()
 export class OriginGuard implements CanActivate {
-  private readonly staticWhitelist = ['https://paul2021-r.github.io'];
+  private readonly staticWhitelist = [
+    'https://paul2021-r.github.io',
+    'http://localhost:4000',
+    'http://127.0.0.1:4000',
+    'http://172.24.0.1:4000',
+  ];
   //TODO : Redis 기반 가변 Guard 로 개선 예정
 
   canActivate(context: ExecutionContext): boolean {
