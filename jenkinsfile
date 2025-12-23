@@ -22,6 +22,10 @@ pipeline {
         TARGET_PORT = credentials('ssh-port-creds')
         TARGET_PROJECT_PATH = '/home/hansol/workspace/project-protostar-nest'
         TARGET_INFRA_PATH = '/home/hansol/workspace/project-protostar-server-configs/main-server'
+        NESTJS_BLUE_IMAGE = 'ghcr.io/paul2021-r/project-protostar-nest'
+        NESTJS_GREEN_IMAGE = 'ghcr.io/paul2021-r/project-protostar-nest'
+
+
     }
 
     parameters {
@@ -152,6 +156,9 @@ pipeline {
 
                                 // Common Setup
                                 commands << "set -e"
+
+                                commands << "export NESTJS_BLUE_IMAGE=${NESTJS_BLUE_IMAGE}"
+                                commands << "export NESTJS_GREEN_IMAGE=${NESTJS_GREEN_IMAGE}"
                                 
                                 // Action: Build & Deploy (or Full)
                                 if (params.DEPLOY_ACTION != 'Switch Traffic Only') {
