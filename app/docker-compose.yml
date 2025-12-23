@@ -1,12 +1,12 @@
 # Docker Compose 파일 형식 버전
 name: project-protostar-backend
 services:
-  dev:
+  nestjs-dev:
     container_name: protostar-nest-dev
     build:
       context: .
       target: dev_runner
-    command: sh -c "pnpm start dev"
+    command: sh -c "pnpm start:watch"
     ports:
       - '5859:3000'
     volumes:
@@ -23,7 +23,7 @@ services:
         reservations:
           memory: '256M'
     
-  prod:
+  nestjs-prod:
     container_name: protostar-nest-prod
     build:
       context: .
