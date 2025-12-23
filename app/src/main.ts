@@ -23,7 +23,7 @@ async function bootstrap() {
 
   const staticWhitelist = [
     'https://paul2021-r.github.io',
-    'service-protostar.ddns.net',
+    'https://service-protostar.ddns.net',
     'http://localhost:4000',
     'http://127.0.0.1:4000',
     'http://172.24.0.1:4000',
