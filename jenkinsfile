@@ -136,13 +136,17 @@ pipeline {
                         withCredentials([
                             usernamePassword(credentialsId: GHCR_CREDS_ID, usernameVariable: 'GHCR_USER', 
                             passwordVariable: 'GHCR_TOKEN'), 
-                            string(credentialsId: 'prod-database-url', variable: 'PROD_DB_URL'),
-                            string(credentialsId: 'prod-redis-host', variable: 'PROD_REDIS_HOST'),
-                            string(credentialsId: 'prod-redis-port', variable: 'PROD_REDIS_PORT'),
-                            string(credentialsId: 'prod-redis-password', variable: 'PROD_REDIS_PASSWORD'),
-                            string(credentialsId: 'prod-redis-db', variable: 'PROD_REDIS_DB'),
+                            file(credentialsId: 'prod-nestjs-env-file', variable: 'PROD_ENV_FILE')
                             ]) {
                             sshagent(credentials: [TARGET_SSH_CREDS_ID]) {
+                                // [NEW] 1. SCP the Secret File to server (Safe Transfer)
+                                
+                                // Ensure remote directory exists
+                                sh "ssh -o StrictHostKeyChecking=no -p ${TARGET_PORT} ${TARGET_HOST} 'mkdir -p ${TARGET_PROJECT_PATH}'"
+                                
+                                // SCP the file provided by Jenkins
+                                sh "scp -o StrictHostKeyChecking=no -P ${TARGET_PORT} ${PROD_ENV_FILE} ${TARGET_HOST}:${TARGET_PROJECT_PATH}/.env"
+
                                 // 2. Deployment Script Construction
                                 def commands = []
 
@@ -164,15 +168,6 @@ pipeline {
                                     commands << "git pull origin main" 
                                     commands << "git checkout main"
                                     
-                                    commands << "echo '--- Exporting URL ---'"
-                                    commands << "set +x"
-                                    commands << "export DATABASE_URL='${PROD_DB_URL}'"
-                                    commands << "export REDIS_HOST='${PROD_REDIS_HOST}'"
-                                    commands << "export REDIS_PORT='${PROD_REDIS_PORT}'"
-                                    commands << "export REDIS_PASSWORD='${PROD_REDIS_PASSWORD}'"
-                                    commands << "export REDIS_DB='${PROD_REDIS_DB}'"
-                                    commands << "set -x"
-
                                     // Loop through services
                                     deployServices.each { service ->
                                         def tagEnvVar = (service == "nestjs-green") ? "TAG_GREEN" : "TAG_BLUE"
@@ -188,7 +183,7 @@ pipeline {
                                     }
 
                                     deployServices.each { service ->
-                                        commands << "docker compose --env-file init.env up -d --no-deps --force-recreate ${service}"
+                                        commands << "docker compose --env-file .env up -d --no-deps --force-recreate ${service}"
                                     }
                                     
                                     commands << "echo '--- Logging out from GHCR on target server ---'"

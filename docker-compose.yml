@@ -4,9 +4,9 @@ services:
     image: ${NESTJS_BLUE_IMAGE}:${TAG_BLUE}
     networks:
       - main-protostar
+    env_file: .env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}  # 호스트 환경 변수 주입
     restart: unless-stopped
     deploy:
       resources:
@@ -20,9 +20,9 @@ services:
     image: ${NESTJS_GREEN_IMAGE}:${TAG_GREEN}
     networks:
       - main-protostar
+    env_file: .env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}  # 호스트 환경 변수 주입
     restart: unless-stopped
     deploy:
       resources:
