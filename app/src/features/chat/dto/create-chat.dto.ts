@@ -15,9 +15,9 @@ export class CreateChatDto {
   @IsNotEmpty()
   uuid: string;
 
-  @IsEnum(['general', 'page_context'])
+  @IsEnum(['general', 'page_context', 'test'])
   @IsNotEmpty()
-  mode: 'general' | 'page_context';
+  mode: 'general' | 'page_context' | 'test';
 
   @IsString()
   @IsNotEmpty()
