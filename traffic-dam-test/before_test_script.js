@@ -105,7 +105,6 @@ export function scenarioLifecycle() {
                 console.log('Skipping empty heartbeat/ping...');
                 return;
             }
-            // console.log(`event id=${eventData.id}, name=${eventData.name}, data=${eventData.data}`)
 
             const data = JSON.parse(eventData.data);
 
@@ -145,11 +144,12 @@ export function scenarioLifecycle() {
             }
 
             if (data.type === 'message') {
-                const innerData = data.content;
-                if (innerData.type === 'done') {
-                    console.log('Task Finished')
-                    client.close();
-                }
+                console.log('Message received')
+            }
+
+            if (data.type === 'done') {
+                console.log('Task Finished')
+                client.close();
             }
         })
 
