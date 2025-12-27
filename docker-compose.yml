@@ -2,6 +2,10 @@ services:
   nestjs-blue:
     container_name: main-nestjs-blue
     image: ${NESTJS_BLUE_IMAGE}:${TAG_BLUE}
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     networks:
       - main-protostar
     env_file: .env
@@ -18,6 +22,10 @@ services:
   nestjs-green:
     container_name: main-nestjs-green
     image: ${NESTJS_GREEN_IMAGE}:${TAG_GREEN}
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     networks:
       - main-protostar
     env_file: .env
