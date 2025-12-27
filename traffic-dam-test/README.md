@@ -52,7 +52,7 @@ sudo apt-get install k6
 2. k6 스크립트 실행 
 
 ```shell
-k6 run script.js
+k6 run script.js 2> error_log.txt # 에러 로그 파일 저장을 위한 stderr 활용 파이프
 ```
 
 3. NestJS 서버 설정 
@@ -67,3 +67,73 @@ ulimit -n 65535
     1. 실시간 로그 : `docker logs -f <container_name>`
     2. 리소스 모니터링 : `docker stats`
     3. 사실 현재 쓰기 가장 좋은 것 : Grfana 대시보드 활용 가능
+
+## 1차 Before Test 결과
+
+### 1. 테스트 개요 및 환경
+
+* **목적**: 트래픽 제어(Traffic Dam) 로직이 없는 순수 상태(Raw)의 서버가 감당할 수 있는 **물리적/소프트웨어적 임계점(Capacity Limit)** 확인.
+* **환경**:
+* **H/W**: Ryzen 7430U (6C/12T), On-Premise.
+* **S/W**: Docker Container (NestJS Single Instance, Nginx Reverse Proxy).
+* **제한**: CPU/Memory 제한 없음 (Host 자원 공유).
+
+
+* **사용 스크립트**: `scenarioLifecycle` (SSE 연결 -> POST 질문 -> 응답 대기 -> 종료)
+
+### 2. 시나리오별 결과 요약
+
+#### A. [Scenario 0] Constant VUs (동시 접속 1,100명 유지) - **Fail** ❌
+
+* **결과**: `http_req_duration` P95 **9초** 지연 발생, `status_0` (Timeout) 에러 다수 발생.
+* **현상**:
+* 1,000명까지는 처리가 되나, 1,100명이 동시에 접속을 시도하는 순간 대기열(Queue)이 폭발.
+* 사용자는 연결 수립에만 9초 이상 대기하다가 타임아웃으로 이탈.
+* **결론**: 현재 단일 인스턴스의 동시 처리 한계는 **약 1,000명**으로 확인.
+
+
+
+#### B. [Scenario 1] Ramping VUs (0 -> 2,000명 점진적 증가) - **Conditional Pass** ⚠️
+
+* **결과**: 에러율 0%로 통과했으나, **최대 지연 시간(Max Latency) 5분** 기록.
+* **현상**:
+* 서서히 유입될 경우(Ramping) 처리 속도가 유입 속도를 간신히 따라잡아 에러는 없었음.
+* 하지만 P95(상위 5%) 유저는 수 분간 응답을 기다려야 했음 (사실상 서비스 불능).
+* **결론**: "안 죽고 버티는 것"과 "서비스 가능한 것"은 다름을 확인.
+
+
+
+#### C. [Scenario 2] Abuser (악성 유저 5명, 50ms 연사) - **Pass** ✅
+
+* **결과**: P95 응답 속도 **0.06초(67ms)**, 처리량 초당 50 TPS 이상.
+* **현상**: 소수의 유저가 빠르게 요청하는 것은 Non-blocking I/O 특성상 매우 효율적으로 처리함.
+* **결론**: 서버의 적은 '속도'가 아니라 **'동시 접속자 수(Concurrency)'**임이 증명됨.
+
+### 3. 심층 분석 (Deep Dive)
+
+**Q. CPU가 남는데 왜 서버는 느려졌는가?**
+모니터링 도구(`btop`, `docker stats`) 분석 결과, 두 가지 명확한 병목 지점이 발견됨.
+
+1. **Nginx Bottleneck (CPU 118%)**:
+* 1,100명의 HTTPS 암호화/복호화(SSL Handshake)를 처리하느라 Nginx가 가장 먼저 과부하에 걸림.
+* 멀티 프로세스인 Nginx가 CPU 1코어 이상을 점유하며 입구에서부터 지연 발생.
+
+
+2. **Node.js Event Loop Lag (CPU 48%)**:
+* 싱글 스레드인 NestJS는 1개의 코어(약 8.3% 점유율)를 100% 사용 중이었으나, I/O 대기(Redis 통신 등)로 인해 전체 CPU 사용률은 48%에 머뭄.
+* **의미**: CPU 자원이 남아도, 구조적으로 **싱글 인스턴스는 1,000명 이상의 동시 접속을 처리할 수 없음**을 수학적으로 증명.
+
+### 4. 결론 및 Next Step (Traffic Dam 전략 수립)
+
+현재 아키텍처(Single Instance)에서의 **최대 수용 가능 인원은 1,000명**으로 예상됨. 이를 초과하는 트래픽을 무작정 받을 경우, 기존 유저까지 9초 이상의 지연을 겪으며 서비스 전체 품질이 저하됨. 단, 이를 명확하게 하기 위해 CPU 의 코어수 제약을 걸어서, 최소 단위의 인스턴스 컨테이너를 구상하여 확실한 Before 테스트 결과를 정리할 예정. 이후 이를 기반으로 **Traffic Dam(유량 제어)** 설계를 적용하여 2차 테스트(After Test)를 진행할 예정임.
+
+1. **Gatekeeper**: `CHAT_MAX_CONNECTIONS` 상수를 **1,000**으로 설정.
+2. **Fail-Fast**: 1,001번째 유저부터는 대기시키지 않고 즉시 `429 Too Many Requests`를 반환하여 리소스 보호.
+3. **Scale-Out**: 향후 2,000명 수용을 위해 인스턴스를 2개로 늘려보고 Redis를 통한 상태 공유(Atomic Operation) 검증.
+
+Traffic Dam 구현을 위한 작업 목록 
+1. Nginx 설정
+2. Traffic Dam 보강 및 429 전달 가능하게 구현
+3. Circuit Breaker 구현 및 503 전달 가능하게 구현
+4. TTL 구현
+5. DLQ(보너스) 로 실패 => 기록하도록 구현(걍 로깅으로라도 구현하면 되니까 loki 있으니)
