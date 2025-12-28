@@ -77,12 +77,12 @@ export const options = {
 
     scenarios: {
         // [시나리오 0] API 테스트 
-        api_test: {
-            executor: 'constant-vus',
-            vus: 1100,
-            duration: '1m',
-            exec: 'scenarioLifecycle',
-        },
+        // api_test: {
+        //     executor: 'constant-vus',
+        //     vus: 1100,
+        //     duration: '1m',
+        //     exec: 'scenarioLifecycle',
+        // },
         // [시나리오 1] 일반 유저: 정상적인 대화 사이클 (생각하는 시간 포함)
         // step_1_normal_users: {
         //     executor: 'ramping-vus',
@@ -99,12 +99,12 @@ export const options = {
 
         // [시나리오 2] 악성 유저: 5명이서 미친듯이 사이클을 돌림 (Thinking Time 없음)
         // *참고: SSE 연결/해제 비용까지 서버에 부하를 줌
-        // step_2_abusers: {
-        //     executor: 'constant-vus',
-        //     vus: 5,
-        //     duration: '5m',
-        //     exec: 'scenarioAbuser',
-        // },
+        step_2_abusers: {
+            executor: 'constant-vus',
+            vus: 5,
+            duration: '5m',
+            exec: 'scenarioAbuser',
+        },
     },
 };
 
