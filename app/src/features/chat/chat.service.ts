@@ -115,11 +115,7 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
       // Worker에서 보낸 데이터가 단순 string이면 { content: ... } 로 감쌈
       const payload = JSON.parse(messageString);
 
-      userStream.next({
-        type: 'message',
-        content: payload.content || payload, // 구조에 따라 조정
-        timestamp: new Date().toISOString(),
-      });
+      userStream.next(payload);
     } catch (e) {
       this.logger.error(`Message Routing Failed: ${e.message}`);
     }
