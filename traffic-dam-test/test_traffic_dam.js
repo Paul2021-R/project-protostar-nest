@@ -8,10 +8,10 @@ import { Counter, Trend } from 'k6/metrics';
 const ai_response_time = new Trend('ai_response_time');
 const ai_ttft = new Trend('ai_ttft');
 
-const sseInitCount = new Counter('sse_init_count');   // AI가 보낸 토큰 개수
-const sseMsgCount = new Counter('sse_msg_count');   // AI가 보낸 토큰 개수
-const sseDoneCount = new Counter('sse_done_count'); // 완료 신호 개수
-const sseErrCount = new Counter('sse_err_count');   // SSE 에러 개수
+const sseInitCount = new Counter('sse_init_count');   // Init 절차 성공 카운터
+const sseMsgCount = new Counter('sse_msg_count');   // AI가 보낸 이벤트 카운터
+const sseDoneCount = new Counter('sse_done_count'); // AI 보낸 Done 이벤트 카운터
+const sseErrCount = new Counter('sse_err_count');   // SSE 에러 카운터
 
 // 상태 코드별 카운터 정의
 const status200 = new Counter('status_200_OK');
@@ -20,23 +20,6 @@ const status500 = new Counter('status_500_ServerErr');
 const status502 = new Counter('status_502_BadGateway');
 const status503 = new Counter('status_503_ServiceUnavail');
 const statusOther = new Counter('status_Other');
-
-// 상태 코드를 받아서 적절한 카운터를 올리는 헬퍼 함수
-function countStatus(status) {
-    if (status === 200 || status === 201) {
-        status200.add(1);
-    } else if (status >= 400 && status < 500) {
-        status4xx.add(1);
-    } else if (status === 500) {
-        status500.add(1);
-    } else if (status === 502) {
-        status502.add(1);
-    } else if (status === 503) {
-        status503.add(1);
-    } else {
-        statusOther.add(1);
-    }
-}
 
 function logErrorToFile(context, status, bodyOrError) {
     // 200번대(정상)가 아니면 무조건 기록
