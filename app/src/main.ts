@@ -6,6 +6,7 @@ import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -20,6 +21,7 @@ async function bootstrap() {
         }),
       ],
     }),
+    bodyParser: false,
   });
 
   const staticWhitelist = [
@@ -55,6 +57,9 @@ async function bootstrap() {
    * 8. Exception Filters
    * 9. Response 
    */
+
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
