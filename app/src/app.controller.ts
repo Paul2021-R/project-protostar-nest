@@ -9,7 +9,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-  ) { }
+  ) {}
 
   @Get()
   getHello(): string {
