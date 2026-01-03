@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { RedisModule } from '../redis/redis.module';
 import { AiStatusMonitoringService } from './ai-status-monitoring.service';
-import { SystemMonitoringService } from './sytem-monitoring.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AiCircuitGuard } from '../guards/ai-circuit.guard';
+import { SystemMonitoringService } from './system-monitoring.service';
 
 @Module({
   imports: [ScheduleModule.forRoot(), RedisModule],
@@ -14,4 +14,4 @@ import { AiCircuitGuard } from '../guards/ai-circuit.guard';
   ],
   exports: [AiStatusMonitoringService, SystemMonitoringService, AiCircuitGuard],
 })
-export class MonitoringModule {}
+export class MonitoringModule { }

@@ -112,6 +112,14 @@ export function scenarioLifecycle() {
 
 
     const response = sse.open(url, sseParams, function (client) {
+
+        // [추가] 30초 안전 타임아웃 추가, 비정상 pending 상태일 때 k6를 멈추지 않게 만들기 위한 도구
+        const timeout = setTimeout(() => {
+            console.log('⏰ Timeout! Force closing SSE.');
+            sseErrCount.add(1); // 에러 카운트 증가
+            client.close();     // 강제 종료
+        }, 30000); // 30초 (원하는 시간으로 조절)
+
         client.on('open', function open() {
             console.log('connected')
         })
@@ -178,6 +186,8 @@ export function scenarioLifecycle() {
             }
 
             if (data.type === 'done') {
+                // 정상 종료 시 타임아웃 제거
+                clearTimeout(timeout);
                 ai_response_time.add(Date.now() - startTime);
                 console.log('Task Finished')
                 sseDoneCount.add(1);
@@ -186,6 +196,9 @@ export function scenarioLifecycle() {
         })
 
         client.on('error', function (error) {
+            // 정상 종료 시 타임아웃 제거
+            clearTimeout(timeout);
+
             // console.log(error)
             sseErrCount.add(1);
         })

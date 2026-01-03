@@ -5,12 +5,10 @@ import { PrismaService } from './prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { REDIS_CLIENT, RedisModule } from './common/redis/redis.module';
 import { ChatModule } from './features/chat/chat.module';
-import { SystemMonitoringService } from './common/monitoring/sytem-monitoring.service';
 import { ThrottlerGuard, ThrottlerModule, seconds } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { Redis } from 'ioredis';
 import { APP_GUARD } from '@nestjs/core';
-import { MonitoringModule } from './common/monitoring/monitoring.module';
 
 @Module({
   imports: [
@@ -51,4 +49,4 @@ import { MonitoringModule } from './common/monitoring/monitoring.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
