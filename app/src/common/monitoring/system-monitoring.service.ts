@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 
 @Injectable()
-export class MonitoringService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger('SystemMetric');
+export class SystemMonitoringService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(SystemMonitoringService.name);
   private interval: NodeJS.Timeout;
 
   onModuleInit() {

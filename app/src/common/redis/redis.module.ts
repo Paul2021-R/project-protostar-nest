@@ -16,6 +16,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
           port: configService.get<number>('REDIS_PORT'),
           password: configService.get<string>('REDIS_PASSWORD'),
           db: configService.get<number>('REDIS_DB', 0),
+          commandTimeout: 5000, // redis 타임아웃 설정
         });
       },
       inject: [ConfigService],
@@ -26,7 +27,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
 export class RedisModule implements OnModuleInit {
   private readonly logger = new Logger(RedisModule.name);
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) { }
 
   async onModuleInit() {
     const { host, port, db } = this.redis.options;

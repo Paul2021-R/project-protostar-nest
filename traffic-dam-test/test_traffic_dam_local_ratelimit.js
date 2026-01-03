@@ -47,13 +47,13 @@ function logErrorToFile(context, status, bodyOrError) {
 // -----------------------------------------------------------------------
 // 1. 설정 영역
 // -----------------------------------------------------------------------
-const BASE_URL = 'https://back-protostar.ddns.net';
+const BASE_URL = 'http://localhost:5859';
 
 export const options = {
     // 시스템 사망 판정 기준
     thresholds: {
         http_req_failed: ['rate<0.01'], // 에러율 1% 미만
-        http_req_duration: ['p(95)<1000'], // 95%의 요청이 3초 이내
+        http_req_duration: ['p(95)<1000'], // 95%의 요청이 1초 이내
         ai_response_time: ['p(95)<15000'], // 전체 응답 시간 15초 이내
         ai_ttft: ['p(95)<5000'], // 첫 토큰 5초 이내
     },
