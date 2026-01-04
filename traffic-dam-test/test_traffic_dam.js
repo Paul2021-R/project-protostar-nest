@@ -60,25 +60,25 @@ export const options = {
 
     scenarios: {
         // [시나리오 0] API 테스트 
-        // api_test: {
-        //     executor: 'constant-vus',
-        //     vus: 1100,
-        //     duration: '1m',
-        //     exec: 'scenarioLifecycle',
-        // },
-        // [시나리오 1] 일반 유저: 정상적인 대화 사이클 (생각하는 시간 포함)
-        step_1_normal_users: {
-            executor: 'ramping-vus',
-            startVUs: 0,
-            stages: [
-                { duration: '30s', target: 100 },  // Warming
-                { duration: '1m', target: 500 },  // Load
-                { duration: '2m', target: 1000 }, // Stress
-                { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
-                { duration: '30s', target: 0 },    // Cool-down
-            ],
+        api_test: {
+            executor: 'constant-vus',
+            vus: 1100,
+            duration: '1m',
             exec: 'scenarioLifecycle',
         },
+        // [시나리오 1] 일반 유저: 정상적인 대화 사이클 (생각하는 시간 포함)
+        // step_1_normal_users: {
+        //     executor: 'ramping-vus',
+        //     startVUs: 0,
+        //     stages: [
+        //         { duration: '30s', target: 100 },  // Warming
+        //         { duration: '1m', target: 500 },  // Load
+        //         { duration: '2m', target: 1000 }, // Stress
+        //         { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
+        //         { duration: '30s', target: 0 },    // Cool-down
+        //     ],
+        //     exec: 'scenarioLifecycle',
+        // },
 
         // [시나리오 2] 악성 유저: 5명이서 미친듯이 사이클을 돌림 (Thinking Time 없음)
         // *참고: SSE 연결/해제 비용까지 서버에 부하를 줌
