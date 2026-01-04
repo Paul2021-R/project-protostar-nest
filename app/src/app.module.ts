@@ -24,17 +24,17 @@ import { APP_GUARD } from '@nestjs/core';
       useFactory: (redis: Redis) => ({
         throttlers: [
           {
-            name: 'short',
+            name: 'burst',
             ttl: seconds(1),
-            limit: 10,
+            limit: 700,
           },
           {
-            name: 'medium',
+            name: 'sustained',
             ttl: seconds(60),
-            limit: 40,
+            limit: 5000,
           },
         ],
-        errorMessage: 'Too many requests. Please try again later.',
+        errorMessage: 'System is busy. Please try again later.',
         storage: new ThrottlerStorageRedisService(redis.duplicate()),
       }),
     }),
