@@ -67,30 +67,31 @@ export const options = {
         //     exec: 'scenarioLifecycle',
         // },
         // [시나리오 1] 일반 유저: 정상적인 대화 사이클 (생각하는 시간 포함)
-        // step_1_normal_users: {
-        //     executor: 'ramping-vus',
-        //     startVUs: 0,
-        //     stages: [
-        //         { duration: '30s', target: 100 },  // Warming
-        //         { duration: '1m', target: 600 },  // Load
-        //         // { duration: '2m', target: 1000 }, // Stress
-        //         // { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
-        //         { duration: '30s', target: 0 },    // Cool-down
-        //     ],
-        //     gracefulRampDown: '2m',
-        //     gracefulStop: '2m',
-        //     exec: 'scenarioLifecycle',
-        // },
+        step_1_normal_users: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '30s', target: 100 },  // Warming
+                { duration: '1m', target: 600 },  // Load
+                // { duration: '2m', target: 1000 }, // Stress
+                // { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
+                { duration: '30s', target: 0 },    // Cool-down
+            ],
 
-        step_1_5_normal_users_one_iter: {
-            executor: 'per-vu-iterations',
-            vus: 500,
-            iterations: 1,  // VU당 딱 1번
-            maxDuration: '2m',
-            startTime: '0s',
-            gracefulStop: '30s',
+            gracefulRampDown: '2m',
+            gracefulStop: '2m',
             exec: 'scenarioLifecycle',
         },
+
+        // step_1_5_normal_users_one_iter: {
+        //     executor: 'per-vu-iterations',
+        //     vus: 500,
+        //     iterations: 1,  // VU당 딱 1번
+        //     maxDuration: '2m',
+        //     startTime: '0s',
+        //     gracefulStop: '30s',
+        //     exec: 'scenarioLifecycle',
+        // },
 
         // [시나리오 2] 악성 유저: 5명이서 미친듯이 사이클을 돌림 (Thinking Time 없음)
         // *참고: SSE 연결/해제 비용까지 서버에 부하를 줌
@@ -219,9 +220,7 @@ export function scenarioLifecycle() {
     if (response) {
         const bodyStr = response.body ? response.body.toString().substring(0, 300) : "No Body";
         logErrorToFile('SSE_OPEN_REQ', response.status, bodyStr);
-        if (response.status === 429) {
-            sleep(1)
-        }
+        sleep(1)
     }
 
     check(response, {
