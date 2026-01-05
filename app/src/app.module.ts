@@ -26,7 +26,7 @@ import { APP_GUARD } from '@nestjs/core';
           {
             name: 'burst',
             ttl: seconds(1),
-            limit: 600,
+            limit: 1000,
           },
           {
             name: 'sustained',
