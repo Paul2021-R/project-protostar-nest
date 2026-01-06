@@ -26,12 +26,12 @@ import { APP_GUARD } from '@nestjs/core';
           {
             name: 'burst',
             ttl: seconds(1),
-            limit: 1000,
+            limit: 2000,
           },
           {
             name: 'sustained',
             ttl: seconds(60),
-            limit: 30000,
+            limit: 6000,
           },
         ],
         errorMessage: 'System is busy. Please try again later.',
