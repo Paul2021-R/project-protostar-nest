@@ -31,7 +31,7 @@ import { APP_GUARD } from '@nestjs/core';
           {
             name: 'sustained',
             ttl: seconds(60),
-            limit: 6000,
+            limit: 60000,
           },
         ],
         errorMessage: 'System is busy. Please try again later.',
