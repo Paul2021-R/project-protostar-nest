@@ -72,7 +72,7 @@ export const options = {
             startVUs: 0,
             stages: [
                 { duration: '30s', target: 100 },  // Warming
-                { duration: '1m', target: 500 },  // Load
+                { duration: '1m', target: 600 },  // Load
                 // { duration: '2m', target: 1000 }, // Stress
                 // { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
                 { duration: '30s', target: 0 },    // Cool-down
