@@ -73,7 +73,7 @@ export const options = {
             stages: [
                 { duration: '30s', target: 100 },  // Warming
                 { duration: '1m', target: 600 },  // Load
-                // { duration: '2m', target: 1000 }, // Stress
+                { duration: '2m', target: 1200 }, // Stress
                 // { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
                 { duration: '30s', target: 0 },    // Cool-down
             ],
@@ -117,7 +117,10 @@ export function scenarioLifecycle() {
     let isChatSent = false;
     let sseParams = {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Session-Id': sessionId,
+        },
     }
 
     let startTime = Date.now();
@@ -166,7 +169,10 @@ export function scenarioLifecycle() {
 
                 let params = {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Id': sessionId,
+                    },
                 }
                 if (!isChatSent) {
                     const payload = JSON.stringify({
