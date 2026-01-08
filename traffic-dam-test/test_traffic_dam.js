@@ -73,7 +73,7 @@ export const options = {
             stages: [
                 { duration: '30s', target: 100 },  // Warming
                 { duration: '1m', target: 600 },  // Load
-                { duration: '2m', target: 1100 }, // Stress
+                { duration: '2m', target: 1200 }, // Stress
                 // { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
                 { duration: '30s', target: 0 },    // Cool-down
             ],
