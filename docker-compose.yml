@@ -1,6 +1,5 @@
 services:
   nestjs-blue:
-    container_name: main-nestjs-blue
     image: ${NESTJS_BLUE_IMAGE}:${TAG_BLUE}
     ulimits:
       nofile:
@@ -13,6 +12,7 @@ services:
       - NODE_ENV=production
     restart: unless-stopped
     deploy:
+      replicas: 1
       resources:
         limits:
           memory: '512M' 
@@ -22,7 +22,6 @@ services:
           cpus: '0.5'
 
   nestjs-green:
-    container_name: main-nestjs-green
     image: ${NESTJS_GREEN_IMAGE}:${TAG_GREEN}
     ulimits:
       nofile:
@@ -35,6 +34,7 @@ services:
       - NODE_ENV=production
     restart: unless-stopped
     deploy:
+      replicas: 1
       resources:
         limits:
           memory: '512M' 
