@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { AiCircuitGuard } from 'src/common/guards/ai-circuit.guard';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('api/v1/chat')
 export class ChatController {
@@ -33,6 +34,7 @@ export class ChatController {
 
   constructor(private readonly chatService: ChatService) { }
 
+  @Public()
   @Get('stream/:sessionId')
   @Sse('stream/:sessionId')
   @UseGuards(AiCircuitGuard)
@@ -121,6 +123,7 @@ export class ChatController {
     );
   }
 
+  @Public()
   @Post('message')
   @UseGuards(AiCircuitGuard)
   async getQuestion(@Body() createChatDto: CreateChatDto) {

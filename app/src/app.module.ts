@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './common/prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { REDIS_CLIENT, RedisModule } from './common/redis/redis.module';
 import { ChatModule } from './features/chat/chat.module';
@@ -10,6 +9,9 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import { Redis } from 'ioredis';
 import { APP_GUARD } from '@nestjs/core';
 import { ObjectStorageModule } from './common/objectStorage/objectStorage.module';
+import { AuthModule } from './features/auth/auth.module';
+import { PrismaModule } from './common/prisma/prisma.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -40,15 +42,20 @@ import { ObjectStorageModule } from './common/objectStorage/objectStorage.module
       }),
     }),
     ObjectStorageModule,
+    AuthModule,
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    PrismaService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    }
   ],
 })
 export class AppModule { }

@@ -1,10 +1,10 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { OriginGuard } from './common/guards/origin.guard';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { json, urlencoded } from 'express';
 
@@ -73,6 +73,9 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
+
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
