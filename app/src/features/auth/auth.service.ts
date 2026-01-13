@@ -62,7 +62,7 @@ export class AuthService {
     });
 
     if (!user || !await bcrypt.compare(password, user.password)) {
-      throw new UnauthorizedException("Invalid password");
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const payload = {

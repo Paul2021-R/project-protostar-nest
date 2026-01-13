@@ -3,7 +3,6 @@ import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { Role, User } from "@prisma/client";
 import { ExtractJwt, Strategy } from "passport-jwt";
-import { PrismaService } from "../prisma/prisma.service";
 
 type JwtPayload = {
   sub: string;
@@ -13,7 +12,7 @@ type JwtPayload = {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly configService: ConfigService, private readonly prisma: PrismaService) {
+  constructor(private readonly configService: ConfigService) {
     const secretOrKey = configService.get<string>('JWT_SECRET');
 
     if (!secretOrKey || secretOrKey === '') {
