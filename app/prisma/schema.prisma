@@ -2,13 +2,87 @@ generator client {
   provider     = "prisma-client"
   output       = "../generated/prisma"
   moduleFormat = "cjs"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
+  extensions = [vector] // pgvector 확장 선언
 }
 
-model TestUser {
-  id   Int     @id @default(autoincrement())
-  name String?
+model User {
+  id                  String            @id @default(uuid())
+  email               String            @unique
+  password            String
+  name                String?
+  role                Role              @default(STARGAZER)
+  
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  uploads             KnowledgeDoc[]
+  vectorized          VectorizedDoc[]
+
+  @@map("users")
+}
+
+model KnowledgeDoc {
+  id                  String            @id @default(uuid())
+  title               String
+  originalFilename    String            @map("original_filename")
+  fileSize            Int               @map("file_size")
+  mimeType            String            @map("mime_type")
+
+  minioBucket         String            @map("minio_bucket")
+  minioKey            String            @map("minio_key")
+
+  status              DocStatus         @default(UPLOADED)
+  version             Int               @default(1)
+  contentHash         String            @map("content_hash")
+  errorMessage        String?           @map("error_message")
+
+  uploaderId          String            @map("uploader_id")
+  uploader            User              @relation(fields: [uploaderId], references: [id])
+
+
+  vectors             VectorizedDoc[]
+
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  @@map("knowledge_docs")
+}
+
+model VectorizedDoc {
+  id                  String            @id @default(uuid())
+  
+  content             String            @db.Text
+
+  embedding           Unsupported("vector(1536)")?
+  
+  knowledgeDocId      String            @map("knowledge_doc_id")
+  knowledgeDoc        KnowledgeDoc      @relation(fields: [knowledgeDocId], references: [id])
+
+  uploaderId          String            @map("uploader_id")
+  uploader            User              @relation(fields: [uploaderId], references: [id])
+
+
+  createdAt           DateTime          @default(now()) @map("created_at")
+
+  @@map("vectorized_docs")
+ //@@index([embedding], type: Hnsw) // pgvector indexing 
+}
+
+enum Role {
+  ADMIN
+  STARGAZER
+  PROTOSTAR
+}
+
+enum DocStatus {
+  UPLOADED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
 }
