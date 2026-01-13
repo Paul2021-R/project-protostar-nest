@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { CreateBucketCommand, DeleteObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
@@ -7,14 +8,16 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
   private s3Client: S3Client;
   private bucketName: string;
 
-  constructor() {
+  constructor(
+    private readonly configService: ConfigService,
+  ) {
     this.s3Client = new S3Client({
-      region: process.env.MINIO_REGION || 'us-east-1',
-      endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+      region: this.configService.get<string>('MINIO_REGION') || 'us-east-1',
+      endpoint: this.configService.get<string>('MINIO_ENDPOINT') || 'http://localhost:9000',
       forcePathStyle: true,
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY!,
-        secretAccessKey: process.env.MINIO_SECRET_KEY!,
+        accessKeyId: this.configService.get<string>('MINIO_ACCESS_KEY')!,
+        secretAccessKey: this.configService.get<string>('MINIO_SECRET_KEY')!,
       },
     });
     this.bucketName = process.env.MINIO_BUCKET_NAME!;
@@ -66,6 +69,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
         Key: fileName,
         Body: fileBuffer,
         ContentType: mimeType,
+        ACL: 'public-read',
       });
       await this.s3Client.send(command);
       return fileName;
