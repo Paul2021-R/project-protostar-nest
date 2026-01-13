@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { REDIS_CLIENT, RedisModule } from './common/redis/redis.module';
 import { ChatModule } from './features/chat/chat.module';
@@ -9,6 +8,10 @@ import { ThrottlerGuard, ThrottlerModule, seconds } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { Redis } from 'ioredis';
 import { APP_GUARD } from '@nestjs/core';
+import { ObjectStorageModule } from './common/objectStorage/objectStorage.module';
+import { AuthModule } from './features/auth/auth.module';
+import { PrismaModule } from './common/prisma/prisma.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -24,29 +27,35 @@ import { APP_GUARD } from '@nestjs/core';
       useFactory: (redis: Redis) => ({
         throttlers: [
           {
-            name: 'short',
+            name: 'burst',
             ttl: seconds(1),
-            limit: 10,
+            limit: 2000,
           },
           {
-            name: 'medium',
+            name: 'sustained',
             ttl: seconds(60),
-            limit: 40,
+            limit: 60000,
           },
         ],
-        errorMessage: 'Too many requests. Please try again later.',
+        errorMessage: 'System is busy. Please try again later.',
         storage: new ThrottlerStorageRedisService(redis.duplicate()),
       }),
     }),
+    ObjectStorageModule,
+    AuthModule,
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    PrismaService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    }
   ],
 })
 export class AppModule { }

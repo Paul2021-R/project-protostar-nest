@@ -25,16 +25,20 @@ import { ChatService } from './chat.service';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { AiCircuitGuard } from 'src/common/guards/ai-circuit.guard';
+import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('api/v1/chat')
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatService: ChatService) { }
 
+  @Public()
   @Get('stream/:sessionId')
   @Sse('stream/:sessionId')
   @UseGuards(AiCircuitGuard)
+  @SkipThrottle()
   @Header('X-Accel-Buffering', 'no')
   @Header('Cache-Control', 'no-cache')
   @Header('Connection', 'keep-alive')
@@ -119,6 +123,7 @@ export class ChatController {
     );
   }
 
+  @Public()
   @Post('message')
   @UseGuards(AiCircuitGuard)
   async getQuestion(@Body() createChatDto: CreateChatDto) {
@@ -143,5 +148,13 @@ export class ChatController {
       }
       throw new InternalServerErrorException(e.message);
     }
+  }
+
+  @Get('debug/connections')
+  getDebugInfo() {
+    return {
+      activeConnections: this.chatService.getActiveConnections(),
+      streamMapSize: this.chatService.getStreamMapSize(), // 추가 필요
+    };
   }
 }

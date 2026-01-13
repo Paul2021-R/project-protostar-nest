@@ -9,16 +9,11 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-  ) {}
+  ) { }
 
   @Get()
   getHello(): string {
     return this.appService.getHello();
-  }
-
-  @Get('test-db') // http://localhost:3000/test-db
-  async testDb() {
-    return this.appService.testDbConnection();
   }
 
   @SkipThrottle()

@@ -11,9 +11,11 @@ export class SystemMonitoringService implements OnModuleInit, OnModuleDestroy {
   private interval: NodeJS.Timeout;
 
   onModuleInit() {
-    this.interval = setInterval(() => {
-      this.logSystemMetrics();
-    }, 5000);
+    if (process.env.NODE_ENV === 'production') {
+      this.interval = setInterval(() => {
+        this.logSystemMetrics();
+      }, 5000);
+    }
   }
 
   onModuleDestroy() {

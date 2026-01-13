@@ -205,7 +205,7 @@ pipeline {
                                     if (params.TARGET_COLOR != 'Both') {
                                         def targetService = deployServices[0]
                                         commands << "cd ${TARGET_INFRA_PATH}"
-                                        commands << "sed -i 's|server main-nestjs-.*:3000;|server main-${targetService}:3000;|' ./nginx/nginx_upstream_nestjs.conf"   
+                                        commands << "sed -i 's|server nestjs-.*:3000;|server ${targetService}:3000;|' ./nginx/nginx_upstream_nestjs.conf"   
                                     } else {
                                         commands << "echo 'Skipping Nginx Upstream Switch because TARGET_COLOR is Both (Preserving current active upstream)'"
                                     }

@@ -173,4 +173,8 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
   public getActiveConnections() {
     return ChatService.activeConnections;
   }
+
+  public getStreamMapSize() {
+    return this.streamMap.size;
+  }
 }

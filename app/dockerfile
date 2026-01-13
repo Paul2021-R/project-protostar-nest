@@ -17,14 +17,14 @@ FROM base AS dev_runner
 # 의존성 설치 - dev 용
 RUN pnpm install
 
-# ======= 2. 빌드 스테이지 ========
-FROM dev_runner AS builder
-
 # 나머지 소스 코드 전체 복사 
 COPY . .
 
 # Schema 빌드 시점이라 가짜 URL 사용 괜찮음
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm prisma generate
+
+# ======= 2. 빌드 스테이지 ========
+FROM dev_runner AS builder
 
 # 애플리케이션 빌드
 RUN pnpm run build

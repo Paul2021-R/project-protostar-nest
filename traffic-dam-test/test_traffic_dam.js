@@ -62,32 +62,45 @@ export const options = {
         // [시나리오 0] API 테스트 
         // api_test: {
         //     executor: 'constant-vus',
-        //     vus: 1100,
-        //     duration: '1m',
+        //     vus: 500,
+        //     duration: '10s',
         //     exec: 'scenarioLifecycle',
         // },
         // [시나리오 1] 일반 유저: 정상적인 대화 사이클 (생각하는 시간 포함)
-        // step_1_normal_users: {
-        //     executor: 'ramping-vus',
-        //     startVUs: 0,
-        //     stages: [
-        //         { duration: '30s', target: 100 },  // Warming
-        //         { duration: '1m', target: 500 },  // Load
-        //         { duration: '2m', target: 1000 }, // Stress
-        //         { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
-        //         { duration: '30s', target: 0 },    // Cool-down
-        //     ],
+        step_1_normal_users: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '30s', target: 100 },  // Warming
+                { duration: '1m', target: 600 },  // Load
+                { duration: '2m', target: 1200 }, // Stress
+                // { duration: '1m', target: 2000 }, // Peak (서버 다운 예상 지점)
+                { duration: '30s', target: 0 },    // Cool-down
+            ],
+
+            gracefulRampDown: '2m',
+            gracefulStop: '2m',
+            exec: 'scenarioLifecycle',
+        },
+
+        // step_1_5_normal_users_one_iter: {
+        //     executor: 'per-vu-iterations',
+        //     vus: 500,
+        //     iterations: 1,  // VU당 딱 1번
+        //     maxDuration: '2m',
+        //     startTime: '0s',
+        //     gracefulStop: '30s',
         //     exec: 'scenarioLifecycle',
         // },
 
         // [시나리오 2] 악성 유저: 5명이서 미친듯이 사이클을 돌림 (Thinking Time 없음)
         // *참고: SSE 연결/해제 비용까지 서버에 부하를 줌
-        step_2_abusers: {
-            executor: 'constant-vus',
-            vus: 5,
-            duration: '5m',
-            exec: 'scenarioAbuser',
-        },
+        // step_2_abusers: {
+        //     executor: 'constant-vus',
+        //     vus: 5,
+        //     duration: '5m',
+        //     exec: 'scenarioAbuser',
+        // },
     },
 };
 
@@ -104,7 +117,10 @@ export function scenarioLifecycle() {
     let isChatSent = false;
     let sseParams = {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Session-Id': sessionId,
+        },
     }
 
     let startTime = Date.now();
@@ -114,20 +130,20 @@ export function scenarioLifecycle() {
     const response = sse.open(url, sseParams, function (client) {
 
         // [추가] 30초 안전 타임아웃 추가, 비정상 pending 상태일 때 k6를 멈추지 않게 만들기 위한 도구
-        const timeout = setTimeout(() => {
-            console.log('⏰ Timeout! Force closing SSE.');
-            sseErrCount.add(1); // 에러 카운트 증가
-            client.close();     // 강제 종료
-        }, 30000); // 30초 (원하는 시간으로 조절)
+        // const timeout = setTimeout(() => {
+        //     console.log('⏰ Timeout! Force closing SSE.');
+        //     sseErrCount.add(1); // 에러 카운트 증가
+        //     client.close();     // 강제 종료
+        // }, 60000); // 30초 (원하는 시간으로 조절)
 
         client.on('open', function open() {
-            console.log('connected')
+            // console.log('connected')
         })
 
         client.on('event', function (eventData) {
 
             if (!eventData.data || eventData.data === "") {
-                console.log('Skipping empty heartbeat/ping...');
+                // console.log('Skipping empty heartbeat/ping...');
                 return;
             }
             let data;
@@ -148,12 +164,15 @@ export function scenarioLifecycle() {
             myUuid = data.uuid;
 
             if (data.type === 'init') {
-                console.log('Init received')
+                // console.log('Init received')
                 sseInitCount.add(1);
 
                 let params = {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Id': sessionId,
+                    },
                 }
                 if (!isChatSent) {
                     const payload = JSON.stringify({
@@ -174,22 +193,22 @@ export function scenarioLifecycle() {
             }
 
             if (data.type === 'heartbeat') {
-                console.log('Heartbeat received')
+                // console.log('Heartbeat received')
                 sseMsgCount.add(1);
             }
 
             if (data.type === 'message' && !ttftReceived) {
                 ai_ttft.add(Date.now() - startTime);
                 ttftReceived = true;
-                console.log('Message received')
+                // console.log('Message received')
                 sseMsgCount.add(1);
             }
 
             if (data.type === 'done') {
                 // 정상 종료 시 타임아웃 제거
-                clearTimeout(timeout);
+                // clearTimeout(timeout);
                 ai_response_time.add(Date.now() - startTime);
-                console.log('Task Finished')
+                // console.log('Task Finished')
                 sseDoneCount.add(1);
                 client.close();
             }
@@ -197,7 +216,7 @@ export function scenarioLifecycle() {
 
         client.on('error', function (error) {
             // 정상 종료 시 타임아웃 제거
-            clearTimeout(timeout);
+            // clearTimeout(timeout);
 
             // console.log(error)
             sseErrCount.add(1);
@@ -207,6 +226,7 @@ export function scenarioLifecycle() {
     if (response) {
         const bodyStr = response.body ? response.body.toString().substring(0, 300) : "No Body";
         logErrorToFile('SSE_OPEN_REQ', response.status, bodyStr);
+        sleep(1)
     }
 
     check(response, {
