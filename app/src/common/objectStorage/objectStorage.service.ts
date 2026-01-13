@@ -16,11 +16,11 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
       endpoint: this.configService.get<string>('MINIO_ENDPOINT') || 'http://localhost:9000',
       forcePathStyle: true,
       credentials: {
-        accessKeyId: this.configService.get<string>('MINIO_ACCESS_KEY')!,
-        secretAccessKey: this.configService.get<string>('MINIO_SECRET_KEY')!,
+        accessKeyId: this.configService.get<string>('MINIO_ACCESS_KEY') || 'admin',
+        secretAccessKey: this.configService.get<string>('MINIO_SECRET_KEY') || 'admin',
       },
     });
-    this.bucketName = process.env.MINIO_BUCKET_NAME!;
+    this.bucketName = this.configService.get<string>('MINIO_BUCKET_NAME') || 'protostar';
   }
 
   onModuleDestroy() {
