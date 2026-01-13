@@ -8,7 +8,7 @@ export class AiStatusMonitoringService implements OnModuleInit {
   private readonly logger = new Logger(AiStatusMonitoringService.name);
   private isAiAvailable: boolean = false;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) { }
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   async onModuleInit() {
     try {
@@ -34,10 +34,10 @@ export class AiStatusMonitoringService implements OnModuleInit {
 
       /**
        * ioredis 의 기본 설정 -> 명령어 타임 아웃이 undefined 임
-       * Redis 가 갑자기 죽음 -> NestJS 는 await 이하에서 계속 멈춰 있을 수 있음. 
-       * 하물며 크론 작업이다보니 Redis 응답을 매 초 기다리고 멈춤. 메모리 누수, 이벤트 루프 고갈 발생 가능 
-       * * 무엇이 쌓이는가? 단일 스레드에 뭐가 쌓일까? 
-       * * Promise, Context : Heap 메모리, 변수, 실행문맥이 통째로 메모리 상에 올라간다. 
+       * Redis 가 갑자기 죽음 -> NestJS 는 await 이하에서 계속 멈춰 있을 수 있음.
+       * 하물며 크론 작업이다보니 Redis 응답을 매 초 기다리고 멈춤. 메모리 누수, 이벤트 루프 고갈 발생 가능
+       * * 무엇이 쌓이는가? 단일 스레드에 뭐가 쌓일까?
+       * * Promise, Context : Heap 메모리, 변수, 실행문맥이 통째로 메모리 상에 올라간다.
        * * 이때, GC 는 메모리를 해결하려고 하는데, 문제는 'await'으로 pending 상태이면 GC 는 못 치움
        * 해결 방법: Redis 연결 설정 Timeout 을 설정하여 개선 redis.module.ts 참고
        */

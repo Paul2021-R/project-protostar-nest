@@ -1,5 +1,5 @@
-import { Role, User } from "@prisma/client";
-import { Exclude, Expose } from "class-transformer";
+import { Role, User } from '@prisma/client';
+import { Exclude, Expose } from 'class-transformer';
 
 // NestJS 표준 방식으로 application level 에서 데이터 입출력 통제
 export class UserDto {

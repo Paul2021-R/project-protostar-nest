@@ -1,6 +1,18 @@
-import { Injectable, InternalServerErrorException, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { CreateBucketCommand, DeleteObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { ConfigService } from "@nestjs/config";
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
+import {
+  CreateBucketCommand,
+  DeleteObjectCommand,
+  HeadBucketCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
@@ -8,19 +20,22 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
   private s3Client: S3Client;
   private bucketName: string;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.s3Client = new S3Client({
       region: this.configService.get<string>('MINIO_REGION') || 'us-east-1',
-      endpoint: this.configService.get<string>('MINIO_ENDPOINT') || 'http://localhost:9000',
+      endpoint:
+        this.configService.get<string>('MINIO_ENDPOINT') ||
+        'http://localhost:9000',
       forcePathStyle: true,
       credentials: {
-        accessKeyId: this.configService.get<string>('MINIO_ACCESS_KEY') || 'admin',
-        secretAccessKey: this.configService.get<string>('MINIO_SECRET_KEY') || 'admin',
+        accessKeyId:
+          this.configService.get<string>('MINIO_ACCESS_KEY') || 'admin',
+        secretAccessKey:
+          this.configService.get<string>('MINIO_SECRET_KEY') || 'admin',
       },
     });
-    this.bucketName = this.configService.get<string>('MINIO_BUCKET_NAME') || 'protostar';
+    this.bucketName =
+      this.configService.get<string>('MINIO_BUCKET_NAME') || 'protostar';
   }
 
   onModuleDestroy() {
@@ -31,12 +46,17 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.s3Client.send(
         new HeadBucketCommand({ Bucket: this.bucketName }),
-      )
+      );
       this.logger.log('✅ MinIO Connected & Bucket Found');
     } catch (error) {
-      if (error?.name === 'NotFound' || error?.$metadata?.httpStatusCode === 404) {
+      if (
+        error?.name === 'NotFound' ||
+        error?.$metadata?.httpStatusCode === 404
+      ) {
         // buket 존재 여부 확인 및 버킷 생성
-        this.logger.warn(`⚠️ Bucket not found. Creating bucket: ${this.bucketName}`);
+        this.logger.warn(
+          `⚠️ Bucket not found. Creating bucket: ${this.bucketName}`,
+        );
         await this.createBucket();
       } else {
         // 에러 발생
@@ -50,7 +70,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.s3Client.send(
         new CreateBucketCommand({ Bucket: this.bucketName }),
-      )
+      );
       this.logger.log('✅ Bucket Created Successfully');
     } catch (error) {
       this.logger.error(`❌ Failed to create bucket: ${error}`);
@@ -73,8 +93,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
       });
       await this.s3Client.send(command);
       return fileName;
-    }
-    catch (error) {
+    } catch (error) {
       throw new InternalServerErrorException(`File Upload Failed: ${error}`);
     }
   }
@@ -86,10 +105,8 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
         Key: fileName,
       });
       await this.s3Client.send(command);
-    }
-    catch (error) {
-      throw new InternalServerErrorException(`File Delete Failed: ${error}`)
+    } catch (error) {
+      throw new InternalServerErrorException(`File Delete Failed: ${error}`);
     }
   }
-
 }

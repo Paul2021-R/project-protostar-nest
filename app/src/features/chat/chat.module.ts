@@ -9,4 +9,4 @@ import { MonitoringModule } from '../../common/monitoring/monitoring.module';
   providers: [ChatService],
   exports: [],
 })
-export class ChatModule { }
+export class ChatModule {}
