@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { $Enums, DocStatus, User } from "@prisma/client";
 import { ObjectStorageService } from "src/common/objectStorage/objectStorage.service";
@@ -16,7 +16,7 @@ export class KnowledgeService {
   private readonly personalMaxUploads: number;
 
   constructor(
-    private readonly objectStorageSerivce: ObjectStorageService,
+    private readonly objectStorageService: ObjectStorageService,
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly queueService: QueueService,
@@ -41,7 +41,7 @@ export class KnowledgeService {
   }
 
   private async formatResponse(docs: any[], userId: string) {
-    const correntCount = await this.prisma.knowledgeDoc.count({
+    const currentCount = await this.prisma.knowledgeDoc.count({
       where: {
         uploaderId: userId,
       }
@@ -58,8 +58,8 @@ export class KnowledgeService {
         createdAt: d.createdAt,
       })),
       meta: {
-        total: correntCount,
-        canUpload: Math.max(0, this.personalMaxUploads - correntCount),
+        total: currentCount,
+        canUpload: Math.max(0, this.personalMaxUploads - currentCount),
       }
     }
   }
@@ -67,7 +67,7 @@ export class KnowledgeService {
   private async processSingleFileUpload(user: User, file: Express.Multer.File) {
     const hash = this.calculateHash(file.buffer);
     const minioKey = this.generateMinioKey(file.originalname);
-    await this.objectStorageSerivce.uploadFile(
+    await this.objectStorageService.uploadFile(
       file.buffer,
       minioKey,
       file.mimetype,
@@ -90,6 +90,19 @@ export class KnowledgeService {
   }
 
   public async uploadFiles(user: User, files: Express.Multer.File[]) {
+    const currentCount = await this.prisma.knowledgeDoc.count({
+      where: {
+        uploaderId: user.id,
+      }
+    })
+
+    if (currentCount + files.length > this.personalMaxUploads) {
+      this.logger.warn(`Upload blocked for user ${user.id}: Limit reached (${currentCount}/${this.personalMaxUploads})`);
+      throw new ForbiddenException(
+        `Upload limit reached. You can only store up to ${this.personalMaxUploads} documents. Current: ${currentCount}`,
+      );
+    }
+
     const result = await Promise.all(
       files.map((file) => this.queueService.add(async () =>
         this.processSingleFileUpload(user, file))
@@ -115,11 +128,17 @@ export class KnowledgeService {
 
       const hash = this.calculateHash(file.buffer);
       const minioKey = this.generateMinioKey(file.originalname);
-      await this.objectStorageSerivce.uploadFile(
+      await this.objectStorageService.uploadFile(
         file.buffer,
         minioKey,
         file.mimetype,
       );
+
+      try {
+        await this.objectStorageService.deleteFile(existingDoc.minioKey);
+      } catch (e) {
+        this.logger.warn(`Failed to delete old file during replace: ${e.message}`);
+      }
 
       await this.prisma.knowledgeDoc.update({
         where: { id },
@@ -136,6 +155,8 @@ export class KnowledgeService {
           updatedAt: new Date(),
         },
       });
+
+      return this.findAll(user);
     });
   }
 
@@ -148,7 +169,7 @@ export class KnowledgeService {
   }
 
   public async deleteFile(user: User, id: string) {
-    const doc = await this.prisma.knowledgeDoc.delete({
+    const doc = await this.prisma.knowledgeDoc.findUnique({
       where: { id },
     });
 
@@ -157,7 +178,7 @@ export class KnowledgeService {
     if (doc.uploaderId !== user.id) throw new BadRequestException('Unauthorized');
 
     try {
-      await this.objectStorageSerivce.deleteFile(doc.minioKey);
+      await this.objectStorageService.deleteFile(doc.minioKey);
     } catch (error) {
       this.logger.error(`Failed to delete file: ${error.message}`);
     }
