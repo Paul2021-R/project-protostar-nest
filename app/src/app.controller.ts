@@ -3,14 +3,16 @@ import { AppService } from './app.service';
 import { REDIS_CLIENT } from './common/redis/redis.module';
 import Redis from 'ioredis';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from './common/decorators/public.decorator';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-  ) {}
+  ) { }
 
+  @Public()
   @Get()
   getHello(): string {
     return this.appService.getHello();

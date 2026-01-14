@@ -12,6 +12,8 @@ import { ObjectStorageModule } from './common/objectStorage/objectStorage.module
 import { AuthModule } from './features/auth/auth.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { QueueService } from './common/queue/queue.service';
+import { KnowledgeModule } from './features/knowledge/knowledge.module';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     ObjectStorageModule,
     AuthModule,
     PrismaModule,
+    KnowledgeModule
   ],
   controllers: [AppController],
   providers: [
@@ -56,6 +59,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    QueueService,
   ],
 })
-export class AppModule {}
+export class AppModule { }
