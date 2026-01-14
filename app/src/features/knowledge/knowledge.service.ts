@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as CONSTANTS from 'src/common/constants';
+import { RagWebhookDto } from './dto/rag-webhook.dto';
 
 @Injectable()
 export class KnowledgeService {
@@ -208,5 +209,49 @@ export class KnowledgeService {
       where: { id },
     });
     return this.findAll(user);
+  }
+
+  /**
+   * 웹 훅을 통한 상태 업데이트.
+   * @param dto 
+   */
+  public async updateDocStatusViaWebhook(dto: RagWebhookDto) {
+    const { docId, status, errorMessage, resultMeta } = dto;
+
+    this.logger.log(`Webhook Received: Doc[${docId}] -> ${status}`);
+
+    try {
+
+      let metaDataToUpdate = {};
+
+      if (status === DocStatus.COMPLETED && resultMeta !== undefined) {
+        metaDataToUpdate = {
+          chunkCount: resultMeta.chunkCount,
+          embeddingModel: resultMeta.embeddingModel,
+          vectorStoreKey: resultMeta.vectorStoreKey,
+          completedAt: new Date(),
+        }
+      }
+
+      await this.prisma.knowledgeDoc.update({
+        where: { id: docId },
+        data: {
+          status, // TODO: 실패시 재 요청 해야 하지 않을까?
+          errorMessage: status === DocStatus.FAILED ? errorMessage : undefined,
+          metaData: metaDataToUpdate,
+          updatedAt: new Date(),
+        }
+      })
+
+      return {
+        success: true,
+      }
+
+    } catch (error) {
+      this.logger.error(`❌ Webhook transaction failed for ${docId}: ${error.message}`);
+      // 처리 실패 핸들링을 위한 error 핸들링
+      // TODO: 구체적인 로직 정책이 추가 필요
+      throw new NotFoundException('Failed to process webhook');
+    }
   }
 }

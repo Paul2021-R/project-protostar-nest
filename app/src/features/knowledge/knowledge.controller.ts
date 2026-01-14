@@ -3,10 +3,12 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Logger,
   Param,
   Post,
   Put,
+  UnauthorizedException,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
@@ -16,12 +18,14 @@ import { KnowledgeUploadBusyCheckInterceptor } from 'src/common/interceptors/kno
 import { ValidateUser } from 'src/common/decorators/validate-user.decorator';
 import { User } from '@prisma/client';
 import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import { Public } from 'src/common/decorators/public.decorator';
+import { RagWebhookDto } from './dto/rag-webhook.dto';
 
 @Controller('api/v1/upload/knowledge-docs')
 export class KnowledgeController {
   private readonly logger = new Logger(KnowledgeController.name);
 
-  constructor(private readonly knowledgeService: KnowledgeService) {}
+  constructor(private readonly knowledgeService: KnowledgeService) { }
 
   @Post()
   @UseInterceptors(KnowledgeUploadBusyCheckInterceptor)
@@ -53,4 +57,21 @@ export class KnowledgeController {
   async deleteDoc(@ValidateUser() user: User, @Param('id') id: string) {
     return this.knowledgeService.deleteFile(user, id);
   }
+
+  @Public()
+  @Post('webhook')
+  public async handleWebhook(
+    @Body() dto: RagWebhookDto,
+    @Headers('x-webhook-secret') secret: string,
+  ) {
+    const INTERNAL_WEBHOOK_SECRET = process.env.INTERNAL_WEBHOOK_SECRET || 'protostar-secret-key';
+
+    if (secret !== INTERNAL_WEBHOOK_SECRET) {
+      throw new UnauthorizedException('Invalid Secret Key');
+    }
+
+    return this.knowledgeService.updateDocStatusViaWebhook(dto);
+
+  }
+
 }

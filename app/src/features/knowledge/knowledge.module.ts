@@ -4,6 +4,7 @@ import { KnowledgeService } from './knowledge.service';
 import { QueueService } from 'src/common/queue/queue.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AiTaskService } from './ai-task.service';
 
 @Module({
   imports: [
@@ -27,6 +28,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   controllers: [KnowledgeController],
-  providers: [KnowledgeService, QueueService],
+  providers: [KnowledgeService, QueueService, AiTaskService],
 })
-export class KnowledgeModule {}
+export class KnowledgeModule { }
