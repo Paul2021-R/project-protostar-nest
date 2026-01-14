@@ -1,8 +1,8 @@
-import { Global, Injectable, Logger } from "@nestjs/common";
-import * as CONSTANTS from "../constants";
-import { wrap } from "module";
+import { Global, Injectable, Logger } from '@nestjs/common';
+import * as CONSTANTS from '../constants';
+import { wrap } from 'module';
 
-type Task<T = any> = () => Promise<T>
+type Task<T = any> = () => Promise<T>;
 
 @Injectable()
 export class QueueService {
@@ -38,7 +38,7 @@ export class QueueService {
       if (this.activeCount < this.concurrency) {
         this.next();
       }
-    })
+    });
   }
 
   private next() {
@@ -46,7 +46,9 @@ export class QueueService {
       const task = this.queue.shift();
 
       if (task) {
-        task().catch(error => this.logger.error(`Task execution failed: ${error}`));
+        task().catch((error) =>
+          this.logger.error(`Task execution failed: ${error}`),
+        );
 
         this.next();
       }
@@ -63,7 +65,6 @@ export class QueueService {
       pending: this.queue.length,
       concurrency: this.concurrency,
       maxPending: this.maxPending,
-    }
-
+    };
   }
 }

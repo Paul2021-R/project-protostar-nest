@@ -23,7 +23,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   async signup(dto: SignupDto) {
     const { email, password, role, roleKey } = dto;

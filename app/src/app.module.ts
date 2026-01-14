@@ -46,7 +46,7 @@ import { KnowledgeModule } from './features/knowledge/knowledge.module';
     ObjectStorageModule,
     AuthModule,
     PrismaModule,
-    KnowledgeModule
+    KnowledgeModule,
   ],
   controllers: [AppController],
   providers: [
@@ -62,4 +62,4 @@ import { KnowledgeModule } from './features/knowledge/knowledge.module';
     QueueService,
   ],
 })
-export class AppModule { }
+export class AppModule {}

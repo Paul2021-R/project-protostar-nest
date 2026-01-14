@@ -1,9 +1,15 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { $Enums, DocStatus, User } from "@prisma/client";
-import { ObjectStorageService } from "src/common/objectStorage/objectStorage.service";
-import { PrismaService } from "src/common/prisma/prisma.service";
-import { QueueService } from "src/common/queue/queue.service";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { $Enums, DocStatus, User } from '@prisma/client';
+import { ObjectStorageService } from 'src/common/objectStorage/objectStorage.service';
+import { PrismaService } from 'src/common/prisma/prisma.service';
+import { QueueService } from 'src/common/queue/queue.service';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -21,10 +27,9 @@ export class KnowledgeService {
     private readonly configService: ConfigService,
     private readonly queueService: QueueService,
   ) {
-
-    this.bucketName = this.configService.get<string>('MINIO_BUCKET_NAME') || 'protostar'
+    this.bucketName =
+      this.configService.get<string>('MINIO_BUCKET_NAME') || 'protostar';
     this.personalMaxUploads = CONSTANTS.PERSONAL_MAX_UPLOADS;
-
   }
 
   private calculateHash(buffer: Buffer): string {
@@ -44,8 +49,8 @@ export class KnowledgeService {
     const currentCount = await this.prisma.knowledgeDoc.count({
       where: {
         uploaderId: userId,
-      }
-    })
+      },
+    });
 
     return {
       uploadedData: docs.map((d) => ({
@@ -60,8 +65,8 @@ export class KnowledgeService {
       meta: {
         total: currentCount,
         canUpload: Math.max(0, this.personalMaxUploads - currentCount),
-      }
-    }
+      },
+    };
   }
 
   private async processSingleFileUpload(user: User, file: Express.Multer.File) {
@@ -85,38 +90,50 @@ export class KnowledgeService {
         version: 1,
         contentHash: hash,
         uploaderId: user.id,
-      }
-    })
+      },
+    });
   }
 
   public async uploadFiles(user: User, files: Express.Multer.File[]) {
     const currentCount = await this.prisma.knowledgeDoc.count({
       where: {
         uploaderId: user.id,
-      }
-    })
+      },
+    });
 
     if (currentCount + files.length > this.personalMaxUploads) {
-      this.logger.warn(`Upload blocked for user ${user.id}: Limit reached (${currentCount}/${this.personalMaxUploads})`);
+      this.logger.warn(
+        `Upload blocked for user ${user.id}: Limit reached (${currentCount}/${this.personalMaxUploads})`,
+      );
       throw new ForbiddenException(
         `Upload limit reached. You can only store up to ${this.personalMaxUploads} documents. Current: ${currentCount}`,
       );
     }
 
     const result = await Promise.all(
-      files.map((file) => this.queueService.add(async () =>
-        this.processSingleFileUpload(user, file))
-        .catch((error) => {
-          this.logger.error(`Upload failed for ${file.originalname}: ${error.message}`);
-          return null;
-        })
-      )
-    )
-    return this.formatResponse(result.filter((r) => r !== null), user.id);
+      files.map((file) =>
+        this.queueService
+          .add(async () => this.processSingleFileUpload(user, file))
+          .catch((error) => {
+            this.logger.error(
+              `Upload failed for ${file.originalname}: ${error.message}`,
+            );
+            return null;
+          }),
+      ),
+    );
+    return this.formatResponse(
+      result.filter((r) => r !== null),
+      user.id,
+    );
   }
 
-
-  public async replaceFile(user: User, id: string, title: string, file: Express.Multer.File) {
+  public async replaceFile(
+    user: User,
+    id: string,
+    title: string,
+    file: Express.Multer.File,
+  ) {
     return this.queueService.add(async () => {
       const existingDoc = await this.prisma.knowledgeDoc.findUnique({
         where: { id },
@@ -124,7 +141,8 @@ export class KnowledgeService {
 
       if (!existingDoc) throw new NotFoundException('Document not found');
 
-      if (existingDoc.uploaderId !== user.id) throw new BadRequestException('Unauthorized');
+      if (existingDoc.uploaderId !== user.id)
+        throw new BadRequestException('Unauthorized');
 
       const hash = this.calculateHash(file.buffer);
       const minioKey = this.generateMinioKey(file.originalname);
@@ -137,7 +155,9 @@ export class KnowledgeService {
       try {
         await this.objectStorageService.deleteFile(existingDoc.minioKey);
       } catch (e) {
-        this.logger.warn(`Failed to delete old file during replace: ${e.message}`);
+        this.logger.warn(
+          `Failed to delete old file during replace: ${e.message}`,
+        );
       }
 
       await this.prisma.knowledgeDoc.update({
@@ -175,7 +195,8 @@ export class KnowledgeService {
 
     if (!doc) throw new NotFoundException('Document not found');
 
-    if (doc.uploaderId !== user.id) throw new BadRequestException('Unauthorized');
+    if (doc.uploaderId !== user.id)
+      throw new BadRequestException('Unauthorized');
 
     try {
       await this.objectStorageService.deleteFile(doc.minioKey);
@@ -185,9 +206,7 @@ export class KnowledgeService {
 
     await this.prisma.knowledgeDoc.delete({
       where: { id },
-    })
+    });
     return this.findAll(user);
   }
-
-
 }

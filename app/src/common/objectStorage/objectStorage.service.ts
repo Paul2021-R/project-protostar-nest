@@ -86,7 +86,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
   ): Promise<string> {
     try {
       const command = new PutObjectCommand({
-        Bucket: (specificBucketName ? specificBucketName : this.bucketName),
+        Bucket: specificBucketName ? specificBucketName : this.bucketName,
         Key: fileName,
         Body: fileBuffer,
         ContentType: mimeType,
@@ -105,7 +105,7 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
   ): Promise<void> {
     try {
       const command = new DeleteObjectCommand({
-        Bucket: (specificBucketName ? specificBucketName : this.bucketName),
+        Bucket: specificBucketName ? specificBucketName : this.bucketName,
         Key: fileName,
       });
       await this.s3Client.send(command);
