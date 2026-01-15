@@ -25,7 +25,7 @@ import { RagWebhookDto } from './dto/rag-webhook.dto';
 export class KnowledgeController {
   private readonly logger = new Logger(KnowledgeController.name);
 
-  constructor(private readonly knowledgeService: KnowledgeService) { }
+  constructor(private readonly knowledgeService: KnowledgeService) {}
 
   @Post()
   @UseInterceptors(KnowledgeUploadBusyCheckInterceptor)
@@ -64,14 +64,13 @@ export class KnowledgeController {
     @Body() dto: RagWebhookDto,
     @Headers('x-webhook-secret') secret: string,
   ) {
-    const INTERNAL_WEBHOOK_SECRET = process.env.INTERNAL_WEBHOOK_SECRET || 'protostar-secret-key';
+    const INTERNAL_WEBHOOK_SECRET =
+      process.env.INTERNAL_WEBHOOK_SECRET || 'protostar-secret-key';
 
     if (secret !== INTERNAL_WEBHOOK_SECRET) {
       throw new UnauthorizedException('Invalid Secret Key');
     }
 
     return this.knowledgeService.updateDocStatusViaWebhook(dto);
-
   }
-
 }

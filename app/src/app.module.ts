@@ -61,4 +61,4 @@ import { KnowledgeModule } from './features/knowledge/knowledge.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

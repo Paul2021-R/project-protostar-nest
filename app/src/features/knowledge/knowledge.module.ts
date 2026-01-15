@@ -30,4 +30,4 @@ import { AiTaskService } from './ai-task.service';
   controllers: [KnowledgeController],
   providers: [KnowledgeService, QueueService, AiTaskService],
 })
-export class KnowledgeModule { }
+export class KnowledgeModule {}
