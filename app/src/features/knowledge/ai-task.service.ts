@@ -5,6 +5,12 @@ import Redis from "ioredis";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { REDIS_CLIENT } from "src/common/redis/redis.module";
 
+/**
+ * TODO: 현재 상태는 데이터의 상태에 따라 race condition 발새 여지가 있음. 
+ * 동시성을 고려한 설계로 개선 될 필요 있음. 
+ * 데모로는 충분히 사용 가능한 상태라 향후 개선 예정 
+ */
+
 @Injectable()
 export class AiTaskService {
   private readonly logger = new Logger(AiTaskService.name);
