@@ -1,6 +1,14 @@
-import { DocStatus } from "@prisma/client";
-import { Type } from "class-transformer";
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator";
+import { DocStatus } from '@prisma/client';
+import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 export class RagResultMeataDto {
   @IsNumber()
@@ -14,7 +22,6 @@ export class RagResultMeataDto {
   @IsString()
   @IsOptional()
   vectorStoreKey?: string; // vector store key
-
 }
 
 export class RagWebhookDto {

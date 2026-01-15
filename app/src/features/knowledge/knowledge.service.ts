@@ -213,7 +213,7 @@ export class KnowledgeService {
 
   /**
    * 웹 훅을 통한 상태 업데이트.
-   * @param dto 
+   * @param dto
    */
   public async updateDocStatusViaWebhook(dto: RagWebhookDto) {
     const { docId, status, errorMessage, resultMeta } = dto;
@@ -221,7 +221,6 @@ export class KnowledgeService {
     this.logger.log(`Webhook Received: Doc[${docId}] -> ${status}`);
 
     try {
-
       let metaDataToUpdate = {};
 
       if (status === DocStatus.COMPLETED && resultMeta !== undefined) {
@@ -230,7 +229,7 @@ export class KnowledgeService {
           embeddingModel: resultMeta.embeddingModel,
           vectorStoreKey: resultMeta.vectorStoreKey,
           completedAt: new Date(),
-        }
+        };
       }
 
       await this.prisma.knowledgeDoc.update({
@@ -240,15 +239,16 @@ export class KnowledgeService {
           errorMessage: status === DocStatus.FAILED ? errorMessage : undefined,
           metaData: metaDataToUpdate,
           updatedAt: new Date(),
-        }
-      })
+        },
+      });
 
       return {
         success: true,
-      }
-
+      };
     } catch (error) {
-      this.logger.error(`❌ Webhook transaction failed for ${docId}: ${error.message}`);
+      this.logger.error(
+        `❌ Webhook transaction failed for ${docId}: ${error.message}`,
+      );
       // 처리 실패 핸들링을 위한 error 핸들링
       // TODO: 구체적인 로직 정책이 추가 필요
       throw new BadRequestException('Failed to process webhook');

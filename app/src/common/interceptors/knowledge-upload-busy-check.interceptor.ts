@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class KnowledgeUploadBusyCheckInterceptor implements NestInterceptor {
-  constructor(private readonly queueService: QueueService) { }
+  constructor(private readonly queueService: QueueService) {}
   intercept(
     context: ExecutionContext,
     next: CallHandler<any>,
