@@ -14,4 +14,4 @@ import { SystemMonitoringService } from './system-monitoring.service';
   ],
   exports: [AiStatusMonitoringService, SystemMonitoringService, AiCircuitGuard],
 })
-export class MonitoringModule { }
+export class MonitoringModule {}

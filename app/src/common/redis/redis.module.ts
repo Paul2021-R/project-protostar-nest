@@ -27,7 +27,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
 export class RedisModule implements OnModuleInit {
   private readonly logger = new Logger(RedisModule.name);
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) { }
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   async onModuleInit() {
     const { host, port, db } = this.redis.options;

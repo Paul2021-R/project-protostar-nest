@@ -9,9 +9,15 @@ import {
 export class OriginGuard implements CanActivate {
   private readonly staticWhitelist = [
     'https://paul2021-r.github.io',
+    'https://service-protostar.ddns.net',
     'http://localhost:4000',
     'http://127.0.0.1:4000',
     'http://172.24.0.1:4000',
+    'http://localhost:5859',
+    'http://127.0.0.1:5859',
+    'http://172.18.0.1:5859',
+    'http://localhost:5858',
+    'http://127.0.0.1:5858',
   ];
   //TODO : Redis 기반 가변 Guard 로 개선 예정
 

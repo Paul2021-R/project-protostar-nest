@@ -32,7 +32,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   @Public()
   @Get('stream/:sessionId')
