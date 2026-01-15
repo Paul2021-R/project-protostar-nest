@@ -45,6 +45,7 @@ model KnowledgeDoc {
 
 
   vectors             VectorizedDoc[]
+  metaData            Json?             @map("meta_data")
 
   createdAt           DateTime          @default(now()) @map("created_at")
   updatedAt           DateTime          @updatedAt @map("updated_at")
@@ -54,22 +55,36 @@ model KnowledgeDoc {
 
 model VectorizedDoc {
   id                  String            @id @default(uuid())
-  
+
+  // 청크 순서 (정렬 및 앞뒤 문맥 파악용)
+  chunkIndex          Int               @map("chunk_index")
+
+  // 실제 텍스트 내용
   content             String            @db.Text
 
+  // 유연한 메타데이터
+  metaData            Json?             @map("meta_data")
+
+  // 프롬프트 길이 계산용 
+  tokenCount          Int               @default(0) @map("token_count")
+
+  // 벡터 데이터
   embedding           Unsupported("vector(1536)")?
+
+  // 임베딩 모델
+  embeddingModel      String            @default("openai") @map("embedding_model")
   
+  // 원본 데이터와 관계 설정, 삭제 시 삭제 되도록 처리
   knowledgeDocId      String            @map("knowledge_doc_id")
-  knowledgeDoc        KnowledgeDoc      @relation(fields: [knowledgeDocId], references: [id])
+  knowledgeDoc        KnowledgeDoc      @relation(fields: [knowledgeDocId], references: [id], onDelete: Cascade)
 
   uploaderId          String            @map("uploader_id")
   uploader            User              @relation(fields: [uploaderId], references: [id])
 
-
   createdAt           DateTime          @default(now()) @map("created_at")
 
   @@map("vectorized_docs")
- //@@index([embedding], type: Hnsw) // pgvector indexing 
+  //@@index([embedding], type: Hnsw) // pgvector indexing 
 }
 
 enum Role {
@@ -80,7 +95,6 @@ enum Role {
 
 enum DocStatus {
   UPLOADED
-  QUEUED
   PROCESSING
   COMPLETED
   FAILED

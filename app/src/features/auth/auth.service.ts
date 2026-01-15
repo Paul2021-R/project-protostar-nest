@@ -81,7 +81,7 @@ export class AuthService {
 
     return {
       user: new UserDto(user),
-      access_token: token,
+      accessToken: token,
     };
   }
 }

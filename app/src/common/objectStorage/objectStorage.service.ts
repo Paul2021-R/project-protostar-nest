@@ -82,10 +82,11 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
     fileBuffer: Buffer,
     fileName: string,
     mimeType: string,
+    specificBucketName?: string | null,
   ): Promise<string> {
     try {
       const command = new PutObjectCommand({
-        Bucket: this.bucketName,
+        Bucket: specificBucketName ? specificBucketName : this.bucketName,
         Key: fileName,
         Body: fileBuffer,
         ContentType: mimeType,
@@ -98,10 +99,13 @@ export class ObjectStorageService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async deleteFile(fileName: string): Promise<void> {
+  async deleteFile(
+    fileName: string,
+    specificBucketName?: string | null,
+  ): Promise<void> {
     try {
       const command = new DeleteObjectCommand({
-        Bucket: this.bucketName,
+        Bucket: specificBucketName ? specificBucketName : this.bucketName,
         Key: fileName,
       });
       await this.s3Client.send(command);
