@@ -12,10 +12,8 @@ export class OriginGuard implements CanActivate {
     'https://service-protostar.ddns.net',
     'http://localhost:4000',
     'http://127.0.0.1:4000',
-    'http://172.24.0.1:4000',
-    'http://localhost:5859',
-    'http://127.0.0.1:5859',
-    'http://172.18.0.1:5859',
+    'http://172.18.0.1:4000',
+    'http://172.18.0.1:5858',
     'http://localhost:5858',
     'http://127.0.0.1:5858',
   ];
@@ -33,6 +31,7 @@ export class OriginGuard implements CanActivate {
       return true;
     }
 
+    console.warn(`[OriginGuard] Blocked origin: ${origin}`);
     throw new ForbiddenException('Not allowed origin');
   }
 }

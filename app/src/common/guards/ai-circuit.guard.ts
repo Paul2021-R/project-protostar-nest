@@ -15,6 +15,7 @@ export class AiCircuitGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const isAvailable = this.aiStatusMonitoringService.isAvailable();
     if (!isAvailable) {
+      console.warn('[AiCircuitGuard] Blocked request: AI Service Unavailable');
       throw new ServiceUnavailableException(
         'AI Service is Currently Unavailable.',
       );
