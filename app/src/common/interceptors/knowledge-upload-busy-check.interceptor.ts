@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class KnowledgeUploadBusyCheckInterceptor implements NestInterceptor {
-  constructor(private readonly queueService: QueueService) {}
+  constructor(private readonly queueService: QueueService) { }
   intercept(
     context: ExecutionContext,
     next: CallHandler<any>,
@@ -20,7 +20,7 @@ export class KnowledgeUploadBusyCheckInterceptor implements NestInterceptor {
         statusCode: 503,
         message:
           'System is currently busy processing documents. Please try again later.',
-        error: 'Service Uavailable',
+        error: 'Service Unavailable',
         data: this.queueService.getStatus(),
       });
     }

@@ -46,10 +46,7 @@ export class QueueService {
       const task = this.queue.shift();
 
       if (task) {
-        task().catch((error) =>
-          this.logger.error(`Task execution failed: ${error}`),
-        );
-
+        task();
         this.next();
       }
     }

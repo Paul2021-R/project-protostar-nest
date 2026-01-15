@@ -59,7 +59,6 @@ import { KnowledgeModule } from './features/knowledge/knowledge.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    QueueService,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -143,7 +143,7 @@ export class KnowledgeService {
       if (!existingDoc) throw new NotFoundException('Document not found');
 
       if (existingDoc.uploaderId !== user.id)
-        throw new BadRequestException('Unauthorized');
+        throw new ForbiddenException('Unauthorized');
 
       const hash = this.calculateHash(file.buffer);
       const minioKey = this.generateMinioKey(file.originalname);
@@ -251,7 +251,7 @@ export class KnowledgeService {
       this.logger.error(`❌ Webhook transaction failed for ${docId}: ${error.message}`);
       // 처리 실패 핸들링을 위한 error 핸들링
       // TODO: 구체적인 로직 정책이 추가 필요
-      throw new NotFoundException('Failed to process webhook');
+      throw new BadRequestException('Failed to process webhook');
     }
   }
 }
