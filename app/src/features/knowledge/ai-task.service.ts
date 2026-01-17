@@ -48,6 +48,7 @@ export class AiTaskService {
           minioKey: doc.minioKey,
           mimeType: doc.mimeType,
           minioBucket: doc.minioBucket,
+          uploaderId: doc.uploaderId,
         });
 
         await this.redisSubscriber.rpush('ai:job:queue', payload);
