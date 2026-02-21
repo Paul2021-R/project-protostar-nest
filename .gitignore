@@ -42,5 +42,5 @@ yarn-error.log*
 next-env.d.ts
 
 # k8s
-secret.yaml
+k8s/**/secret.yaml
 

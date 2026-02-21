@@ -7,7 +7,6 @@ metadata:
     app: protostar
     tier: backend
 data:
-  NODE_ENV: "development"
   REDIS_HOST: "192.168.0.37"
   REDIS_PORT: "6379"
   REDIS_DB: "0"
