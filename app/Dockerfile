@@ -38,7 +38,7 @@ RUN pnpm install --prod
 COPY prisma ./prisma
 
 # Prisma Client 생성 (node_modules 에 대한 pnpm 구조 이슈)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm dlx prisma generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm prisma generate
 
 
 # ======= 3. prod 실행 스테이지 ========
