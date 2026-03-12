@@ -32,13 +32,14 @@ RUN pnpm run build
 # ======= 2. 의존성 증류 스테이지 ========
 FROM base AS prod_modules_setter
 
-# 의존성 중 production용만 받아오기
 RUN pnpm install --prod
 
 COPY prisma ./prisma
 
-# Prisma Client 생성 (node_modules 에 대한 pnpm 구조 이슈)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm dlx prisma generate
+# prisma만 별도 설치 후 generate
+RUN pnpm add prisma --save-dev && \
+    DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm prisma generate && \
+    pnpm remove prisma
 
 
 # ======= 3. prod 실행 스테이지 ========
